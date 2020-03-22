@@ -1,0 +1,109 @@
+Language: Cpp
+
+AccessModifierOffset: -4
+
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignConsecutiveMacros: false
+AlignEscapedNewlines: DontAlign
+AlignOperands: false
+AlignTrailingComments: false
+AllowAllArgumentsOnNextLine: false
+AllowAllConstructorInitializersOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: false #pain change to Empty in ver 10
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Empty
+AllowShortLoopsOnASingleLine: false 
+#AlwaysBreakAfterDefinitionReturnType: None #deprecated
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+#BraceWrapping not needed
+#BreakAfterJavaFieldAnnotations: #for java
+BreakBeforeBinaryOperators: None
+BreakBeforeBraces: Allman #not work union
+BreakBeforeTernaryOperators: false
+BreakConstructorInitializers: AfterColon
+BreakInheritanceList: AfterColon
+BreakStringLiterals: false
+ColumnLimit: 160
+#CommentPragmas: #not needed
+CompactNamespaces: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+#ConstructorInitializerIndentWidth: 10 #???
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: false
+#DeriveLineEnding: false #pain change to Empty in ver 10
+DerivePointerAlignment: false
+DisableFormat: false
+#ExperimentalAutoDetectBinPacking #experimental
+#FixNamespaceComments: true #bug doesn't work at all
+#ForEachMacros:
+#IncludeBlocks: Regroup #bad work with IncludeCategories
+IncludeCategories:
+    - Regex: '^<'
+      Priority: 1
+    - Regex: '^"'
+      Priority: 2
+#IncludeIsMainRegex: #???
+#IncludeIsMainSourceRegex: #???
+IndentCaseLabels: true
+#IndentGotoLabels: false #pain change to Empty in ver 10
+IndentPPDirectives: BeforeHash
+IndentWidth: 4
+IndentWrappedFunctionNames: true
+#JavaImportGroups: #for java
+#JavaScriptQuotes: #for java
+#JavaScriptWrapImports: #for java
+#KeepEmptyLinesAtTheStartOfBlocks: false #donesn't work
+#MacroBlockBegin: #???
+#MacroBlockEnd: #???
+MaxEmptyLinesToKeep: 3
+NamespaceIndentation: All
+#NamespaceMacros: #???
+#ObjCBinPackProtocolList: #ObjC
+#ObjCBlockIndentWidth: #ObjC
+#ObjCSpaceAfterProperty: #ObjC
+#ObjCSpaceBeforeProtocolList: #ObjC
+#PenaltyBreakAssignment: 10 #doesn't work in 9'th release
+#PenaltyBreakBeforeFirstCallParameter: true #doesn't work in 9'th release
+#PenaltyBreakComment: 20 #doesn't work in 9'th release
+#PenaltyBreakFirstLessLess: 10 #doesn't work in 9'th release
+#PenaltyBreakString: 10 # I don't know
+#PenaltyBreakTemplateDeclaration: 10 #doesn't work in 9'th release
+#PenaltyExcessCharacter: 10 # I don't know
+#PenaltyReturnTypeOnItsOwnLine: 10 # I don't know
+PointerAlignment: Left
+#RawStringFormats: I don't know
+ReflowComments: false
+SortIncludes: true
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: false
+SpaceBeforeInheritanceColon: false
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+#SpaceBeforeSquareBrackets: false #pain change to Empty in ver 10
+#SpaceInEmptyBlock: false #pain change to Empty in ver 10
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 1
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+#SpacesInContainerLiterals: false #not for c
+SpacesInParentheses: true
+SpacesInSquareBrackets: false
+Standard: Auto
+#StatementMacros: #???
+TabWidth: 4
+#TypenameMacros: #???
+#UseCRLF: true #pain change to Empty in ver 10
+#UseTab: Never #??? #pain change to Empty in ver 10
