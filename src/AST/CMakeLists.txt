@@ -4,4 +4,5 @@ add_library(AST STATIC
     Error.cpp
     Number.cpp
     Type.cpp
+    VariableDeclaration.cpp
 )

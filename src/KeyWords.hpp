@@ -6,7 +6,7 @@
 #include "EToken.hpp"
 
 
-typedef std::map<const std::string, const EToken> KeyWordsType;
+typedef std::map<std::string, EToken> KeyWordsType;
 
 
 //TODO make static

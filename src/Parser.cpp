@@ -8,9 +8,11 @@
 #include "AST/BinaryExpression.hpp"
 #include "AST/Error.hpp"
 #include "AST/Number.hpp"
+#include "AST/VariableDeclaration.hpp"
 #include "KeyWords.hpp"
 #include "Operators.hpp"
 #include "Parser.hpp"
+
 
 
 Parser::Parser( std::stringstream& fileBuffer ): mFileBuffer( fileBuffer ) {}
@@ -141,6 +143,11 @@ TokenType Parser::getNextToken()
                     return { EToken::error, "incorect binary operator: " + binaryOperator };
                 }
             }
+            else if ( nextCharacter == '\n' )
+            {
+                mFileBuffer.get();
+                return { EToken::eol, "eol" };
+            }
             else
             {
                 return { EToken::error, "nothing was recognized" };
@@ -193,8 +200,8 @@ std::unique_ptr<Type> Parser::parsePrimary()
         }
         default:
         {
-            std::cout << "parsePrimary: unhandled token: " << (int)token.first << "\n";
-            returnType = std::make_unique<Error>( "token " + token.second + " can`t be here" );
+            std::cout << "parsePrimary: unhandled token: " << token.first << "\n";
+            returnType = std::make_unique<Error>( "token \"" + token.second + "\" can`t be here" );
             break;
         }
     }
@@ -234,7 +241,12 @@ void Parser::parseFile()
         {
             case EToken::eof:
             {
-                std::cout << "eof token\n";
+                std::cout << token.first << "\n";
+                break;
+            }
+            case EToken::eol:
+            {
+                std::cout << token.first << "\n";
                 break;
             }
             case EToken::integer_literal:
@@ -244,14 +256,33 @@ void Parser::parseFile()
             }
             case EToken::floating_point_literal:
             {
-                mParsedAST.push_back( std::make_unique<Number>( token.second, true ) );
+                mParsedAST.push_back( parseBinaryExpression( std::make_unique<Number>( token.second, true ), Operators().getMinimalOperatorPrecedence() ) );
                 break;
             }
             case EToken::name:
             {
-                //token;
-                //TokenType nextToken = getNextToken();
-                
+                TokenType nextToken = peekNextToken();
+                switch ( nextToken.first )
+                {
+                    case EToken::name:
+                    {
+                        nextToken = getNextToken();
+                        mParsedAST.push_back( parseBinaryExpression( std::make_unique<VariableDeclaration>( token.second, nextToken.second ),
+                                                                     Operators().getMinimalOperatorPrecedence() ) );
+                        break;
+                    }
+                    case EToken::eol:
+                    {
+                        //
+                        break;
+                    }
+                    //TODO call
+                    default:
+                    {
+                        std::cout << "unhandled token: " << token.first << "\n";
+                        break;
+                    }
+                }
                 break;
             }
             case EToken::error:
@@ -262,7 +293,7 @@ void Parser::parseFile()
             }
             default:
             {
-                std::cout << "unhandled token: " << (int)token.first << "\n";
+                std::cout << "unhandled token: " << token.first << "\n";
                 break;
             }
         }

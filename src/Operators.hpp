@@ -5,7 +5,7 @@
 #include <string>
 
 
-typedef std::map<const std::string, const unsigned int> BinaryOperatorsType;
+typedef std::map<std::string, unsigned int> BinaryOperatorsType;
 
 
 //TODO make static

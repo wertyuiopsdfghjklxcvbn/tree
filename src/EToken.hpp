@@ -1,9 +1,11 @@
 #pragma once
 
+#include <ostream>
+
 enum class EToken
 {
     eof = 1,
-    //eol,
+    eol,
     //indent,
     //comment,
     kv_import,
@@ -27,3 +29,5 @@ enum class EToken
     kv_false,
     error
 };
+
+std::ostream& operator<< (std::ostream& os, const EToken& token);

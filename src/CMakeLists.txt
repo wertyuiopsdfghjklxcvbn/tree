@@ -4,6 +4,7 @@ add_executable(tree
     Parser.cpp
     Operators.cpp
     KeyWords.cpp
+    EToken.cpp
 )
 
 target_link_libraries(tree AST)
