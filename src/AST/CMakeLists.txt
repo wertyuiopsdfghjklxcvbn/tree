@@ -5,4 +5,5 @@ add_library(AST STATIC
     Number.cpp
     Type.cpp
     VariableDeclaration.cpp
+    VariableCall.cpp
 )

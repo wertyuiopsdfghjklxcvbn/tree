@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <stack>
 #include "AST/Type.hpp"
 #include "EToken.hpp"
 
@@ -18,9 +19,11 @@ class Parser
 {
 private:
     std::stringstream& mFileBuffer;
-    std::optional<size_t> mIndent;
+    //std::optional<size_t> mIndent;
     std::list<std::unique_ptr<Type>> mParsedAST;
-    std::shared_ptr<TokenType> mNextToken;
+    //std::shared_ptr<TokenType> mNextToken;
+    std::stack<TokenType> mNextTokens;
+
     //std::list<const char*> types;
     //TODO add imported types ?
 
@@ -33,8 +36,10 @@ private:
     TokenType parseNumber();
     TokenType getNextToken();
     TokenType peekNextToken();
-    std::unique_ptr<Type> parsePrimary();
-    std::unique_ptr<Type> parseBinaryExpression( std::unique_ptr<Type> leftHandSide, unsigned int precedence );
+
+    std::unique_ptr<Type> tokenToNode( const TokenType& token );
+    bool isOperable( const EToken& token );
+    std::unique_ptr<Type> parseBinaryExpression( std::unique_ptr<Type> leftHandSide = nullptr );
 
 public:
     Parser( std::stringstream& fileBuffer );

@@ -55,6 +55,16 @@ std::ostream& operator<<( std::ostream& os, const EToken& token )
             os << "boolean_literal";
             break;
         }
+        case EToken::opening_round_bracket:
+        {
+            os << "opening_round_bracket";
+            break;
+        }
+        case EToken::closing_round_bracket:
+        {
+            os << "closing_round_bracket";
+            break;
+        }
         case EToken::kv_class:
         {
             os << "kv_class";
@@ -73,6 +83,11 @@ std::ostream& operator<<( std::ostream& os, const EToken& token )
         case EToken::name:
         {
             os << "name";
+            break;
+        }
+        case EToken::variable_declaration:
+        {
+            os << "variable_declaration";
             break;
         }
         case EToken::kv_true:

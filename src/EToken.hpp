@@ -18,13 +18,15 @@ enum class EToken
     floating_point_literal,
     string_literal,
     boolean_literal,
-
+    opening_round_bracket,
+    closing_round_bracket,
     kv_class,
     kv_structure,
     kv_interface,
     //type,
     //identifier,
     name,
+    variable_declaration,
     kv_true,
     kv_false,
     error
