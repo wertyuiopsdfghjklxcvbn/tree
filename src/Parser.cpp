@@ -6,11 +6,12 @@
 #include <xutility>
 
 #include "AST/BinaryExpression.hpp"
-#include "AST/Error.hpp"
+#include "AST/FunctionCall.hpp"
+#include "AST/FunctionDefinition.hpp"
 #include "AST/Number.hpp"
 #include "AST/VariableCall.hpp"
-#include "AST/VariableDeclaration.hpp"
 #include "KeyWords.hpp"
+#include "Logging.hpp"
 #include "Operators.hpp"
 #include "Parser.hpp"
 
@@ -98,7 +99,7 @@ TokenType Parser::getNextToken()
     {
         if ( !mFileBuffer.eof() )
         {
-            unsigned char nextCharacter = mFileBuffer.peek();
+            int nextCharacter = mFileBuffer.peek();
             if ( mFileBuffer.good() )
             {
                 //std::cout << "\"" << mFileBuffer.peek() << "\" " << mFileBuffer.eof() << " " << mFileBuffer.fail() << "\n";
@@ -123,31 +124,46 @@ TokenType Parser::getNextToken()
                         TokenType nextToken = getNextToken();
                         switch ( nextToken.first )
                         {
-                            case EToken::name:
-                            {
-                                TokenType afterNextToken = getNextToken();
-                                switch ( afterNextToken.first )
-                                {
-                                    case EToken::opening_round_bracket:
-                                    {
-                                        //func proto
-                                    }
-                                    default:
-                                    {
-                                        mNextTokens.push( afterNextToken );
-                                        return { EToken::variable_declaration, name + ' ' + nextToken.second };
-                                        //return { EToken::name, name };
-                                    }
-                                }
-                            }
+                            //case EToken::name:
+                            //{
+                            //    TokenType afterNextToken = getNextToken();
+                            //    switch ( afterNextToken.first )
+                            //    {
+                            //        case EToken::opening_round_bracket:
+                            //        {
+                            //            printError( "function_definition" );
+                            //            mNextTokens.push( afterNextToken );
+                            //            return { EToken::function_definition, name + ' ' + nextToken.second };
+                            //        }
+                            //        default:
+                            //        {
+                            //            printError( "variable_declaration" );
+                            //            mNextTokens.push( afterNextToken );
+                            //            return { EToken::variable_declaration, name + ' ' + nextToken.second };
+                            //        }
+                            //    }
+                            //}
                             case EToken::opening_round_bracket:
                             {
-                                //func call
+                                //printError( "call" );
+                                mNextTokens.push( nextToken );
+                                return { EToken::call, name };
+                            }
+                            case EToken::call:
+                            {
+                                //printError( "function_definition" );
                                 //mNextTokens.push( nextToken );
-                                //return { EToken::name, name };
+                                return { EToken::function_definition, name + ' ' + nextToken.second };
+                            }
+                            case EToken::name:
+                            {
+                                //printError( "variable_declaration" );
+                                //mNextTokens.push( nextToken );
+                                return { EToken::variable_declaration, name + ' ' + nextToken.second };
                             }
                             default:
                             {
+                                //printError( "name" );
                                 mNextTokens.push( nextToken );
                                 return { EToken::name, name };
                             }
@@ -158,6 +174,11 @@ TokenType Parser::getNextToken()
                 {
                     mFileBuffer.get();
                     return getNextToken();
+                }
+                else if ( nextCharacter == ',' )
+                {
+                    mFileBuffer.get();
+                    return { EToken::comma, "comma" };
                 }
                 else if ( nextCharacter == '\"' )
                 {
@@ -188,12 +209,12 @@ TokenType Parser::getNextToken()
                 {
 
                     mFileBuffer.get();
-                    //std::cout << mFileBuffer.fail() << "\n";
                     return { EToken::eol, "eol" };
                 }
                 else
                 {
-                    std::cout << "nothing was recognized: " << (int)nextCharacter << " " << nextCharacter << ".\n";
+                    printError( "nothing was recognized: " + std::to_string( (int)nextCharacter ) + " " + static_cast<char>( nextCharacter ) );
+                    //std::cout << "nothing was recognized: " << (int)nextCharacter << " " << nextCharacter << ".\n";
                     return { EToken::error, "nothing was recognized" };
                 }
             }
@@ -238,7 +259,15 @@ TokenType Parser::peekNextToken()
 }
 
 
-std::unique_ptr<Type> Parser::tokenToNode( const TokenType& token )
+VariableDeclaration Parser::tokenToVariableDeclaration( const TokenType& token ) const
+{
+    std::string type = token.second.substr( 0, token.second.find( ' ' ) );
+    std::string name = token.second.substr( token.second.find( ' ' ) + 1, token.second.size() - 1 );
+    return VariableDeclaration( type, name );
+}
+
+
+std::unique_ptr<Type> Parser::tokenToNode( const TokenType& token ) const
 {
     std::unique_ptr<Type> returnNode;
     switch ( token.first )
@@ -258,9 +287,15 @@ std::unique_ptr<Type> Parser::tokenToNode( const TokenType& token )
             returnNode = std::make_unique<VariableCall>( token.second );
             break;
         }
+        case EToken::variable_declaration:
+        {
+            returnNode = std::make_unique<VariableDeclaration>( tokenToVariableDeclaration( token ) );
+            break;
+        }
         default:
         {
-            returnNode = std::make_unique<Error>( "error converting token" );
+            printError( "error converting token " + tokenToString( token.first ) + " " + token.second );
+            returnNode = nullptr;
             break;
         }
     }
@@ -268,7 +303,7 @@ std::unique_ptr<Type> Parser::tokenToNode( const TokenType& token )
 }
 
 
-bool Parser::isOperable( const EToken& token )
+bool Parser::isOperable( const EToken& token ) const
 {
     bool returnValue = false;
     switch ( token )
@@ -282,6 +317,8 @@ bool Parser::isOperable( const EToken& token )
         case EToken::kv_true:
         case EToken::kv_false:
         case EToken::name:
+        case EToken::call:
+        case EToken::comma:
         {
             returnValue = true;
             break;
@@ -296,29 +333,115 @@ bool Parser::isOperable( const EToken& token )
 }
 
 
+void Parser::pushOperatorToOutputStack( const TokenType& token, std::list<std::unique_ptr<Type>>& outNodes )
+{
+    std::unique_ptr<Type> rhs = std::move( outNodes.back() );
+    outNodes.pop_back();
+    std::unique_ptr<Type> lhs = std::move( outNodes.back() );
+    outNodes.pop_back();
+    outNodes.push_back( std::make_unique<BinaryExpression>( token.second, std::move( lhs ), std::move( rhs ) ) );
+}
+
+
+void Parser::pushFunctionCallToOutputStack( const TokenType& token, std::stack<int>& argsCounters, std::list<std::unique_ptr<Type>>& outNodes )
+{
+    //printError( token.second + " " + std::to_string( argsCounters.top() ) );
+    std::list<std::unique_ptr<Type>> args;
+    for ( size_t i = 0; i < argsCounters.top(); ++i )
+    {
+        args.push_back( std::move( outNodes.back() ) );
+        outNodes.pop_back();
+    }
+    args.reverse();
+    outNodes.push_back( std::make_unique<FunctionCall>( token.second, args ) );
+    argsCounters.pop();
+}
+
+
+bool Parser::popOperatorStack( std::stack<TokenType>& operatorStack, std::stack<int>& argsCounters, std::list<std::unique_ptr<Type>>& outNodes )
+{
+    bool pe = false;
+    while ( !operatorStack.empty() )
+    {
+        if ( operatorStack.top().first == EToken::opening_round_bracket )
+        {
+            if ( argsCounters.size() > 0 && argsCounters.top() == -1 )
+            {
+                argsCounters.pop();
+            }
+            pe = true;
+            break;
+        }
+        else
+        {
+            if ( operatorStack.top().first == EToken::binary_operator )
+            {
+                pushOperatorToOutputStack( operatorStack.top(), outNodes );
+            }
+            else if ( operatorStack.top().first == EToken::call )
+            {
+                pushFunctionCallToOutputStack( operatorStack.top(), argsCounters, outNodes );
+            }
+            operatorStack.pop();
+        }
+    }
+    return pe;
+}
+
+
+
 //https://en.wikipedia.org/wiki/Shunting-yard_algorithm
 std::unique_ptr<Type> Parser::parseBinaryExpression( std::unique_ptr<Type> leftHandSide )
 {
     std::list<std::unique_ptr<Type>> outNodes;
-    //std::list<TokenType> out;
     std::stack<TokenType> operatorStack;
-    //out.push_back( leftHandSide );
+
     if ( leftHandSide )
     {
         outNodes.push_back( std::move( leftHandSide ) );
     }
 
+    std::stack<int> argsCounters;
     TokenType nextToken = peekNextToken();
+
     while ( isOperable( nextToken.first ) )
     {
+        printError( tokenToString( nextToken.first ) + " " + nextToken.second );
         nextToken = getNextToken();
         if ( nextToken.first != EToken::binary_operator && nextToken.first != EToken::opening_round_bracket &&
-             nextToken.first != EToken::closing_round_bracket )
+             nextToken.first != EToken::closing_round_bracket && nextToken.first != EToken::call && nextToken.first != EToken::comma )
         {
-            outNodes.push_back( tokenToNode( nextToken ) );
-            //out.push_back( nextToken );
+            std::unique_ptr<Type> tempNode = tokenToNode( nextToken );
+            if ( tempNode )
+            {
+                outNodes.push_back( std::move( tempNode ) );
+                //count first arg
+                if ( argsCounters.size() > 0 && argsCounters.top() == 0 )
+                {
+                    ++( argsCounters.top() );
+                }
+            }
+            else
+            {
+                return nullptr; //error converting token
+            }
         }
-        //if(nextToken == EToken::comma){}
+        else if ( nextToken.first == EToken::call )
+        {
+            operatorStack.push( nextToken );
+        }
+        else if ( nextToken.first == EToken::comma )
+        {
+            if ( argsCounters.size() > 0 && argsCounters.top() != -1 )
+            {
+                ++( argsCounters.top() );
+            }
+            if ( !popOperatorStack( operatorStack, argsCounters, outNodes ) )
+            {
+                printError( "Error : separator or parentheses mismatched\n" );
+                return nullptr;
+            }
+        }
         else if ( nextToken.first == EToken::binary_operator )
         {
             while ( !operatorStack.empty() )
@@ -326,13 +449,7 @@ std::unique_ptr<Type> Parser::parseBinaryExpression( std::unique_ptr<Type> leftH
                 if ( ( operatorStack.top().first == EToken::binary_operator ) &&
                      ( Operators().getBinaryOperatorPrecedence( nextToken.second ) <= Operators().getBinaryOperatorPrecedence( operatorStack.top().second ) ) )
                 {
-                    std::unique_ptr<Type> rhs = std::move( outNodes.back() );
-                    outNodes.pop_back();
-                    std::unique_ptr<Type> lhs = std::move( outNodes.back() );
-                    outNodes.pop_back();
-                    outNodes.push_back( std::make_unique<BinaryExpression>( operatorStack.top().second, std::move( lhs ), std::move( rhs ) ) );
-
-                    //out.push_back( operatorStack.top() );
+                    pushOperatorToOutputStack( operatorStack.top(), outNodes );
                     operatorStack.pop();
                 }
                 else
@@ -344,92 +461,135 @@ std::unique_ptr<Type> Parser::parseBinaryExpression( std::unique_ptr<Type> leftH
         }
         else if ( nextToken.first == EToken::opening_round_bracket )
         {
+            if ( operatorStack.top().first != EToken::call )
+            {
+                //count first arg
+                if ( argsCounters.size() > 0 && argsCounters.top() == 0 )
+                {
+                    ++( argsCounters.top() );
+                }
+                argsCounters.push( -1 );
+            }
+            else
+            {
+                argsCounters.push( 0 );
+            }
             operatorStack.push( nextToken );
         }
         else if ( nextToken.first == EToken::closing_round_bracket )
         {
-            bool pe = false;
-            while ( !operatorStack.empty() )
-            {
-                if ( operatorStack.top().first == EToken::opening_round_bracket )
-                {
-                    pe = true;
-                    break;
-                }
-                else
-                {
-                    if ( operatorStack.top().first == EToken::binary_operator )
-                    {
-                        std::unique_ptr<Type> rhs = std::move( outNodes.back() );
-                        outNodes.pop_back();
-                        std::unique_ptr<Type> lhs = std::move( outNodes.back() );
-                        outNodes.pop_back();
-                        outNodes.push_back( std::make_unique<BinaryExpression>( operatorStack.top().second, std::move( lhs ), std::move( rhs ) ) );
-                    }
 
-                    //out.push_back( operatorStack.top() );
-                    operatorStack.pop();
-                }
-            }
-            if ( pe )
+            if ( popOperatorStack( operatorStack, argsCounters, outNodes ) )
             {
                 operatorStack.pop();
             }
             else
             {
-                //printf( "Error: parentheses mismatched\n" );
-                return std::make_unique<Error>( "no opening bracket" );
+                printError( "no opening bracket" );
+                return nullptr;
             }
         }
         else
         {
-            return std::make_unique<Error>( "Unknown token: " + nextToken.second );
+            printError( "Unknown token: " + nextToken.second );
+            return nullptr;
         }
         nextToken = peekNextToken();
     }
+
+    if ( ( nextToken.first != EToken::eol ) && ( nextToken.first != EToken::eof ) )
+    {
+        printError( "expected end of line" );
+        return nullptr;
+    }
+
     while ( !operatorStack.empty() )
     {
         if ( operatorStack.top().first == EToken::opening_round_bracket || operatorStack.top().first == EToken::closing_round_bracket )
         {
-            //printf( "Error: parentheses mismatched\n" );
-            return std::make_unique<Error>( "no closing bracket" );
+            printError( "no closing bracket" );
+            return nullptr;
         }
 
         if ( operatorStack.top().first == EToken::binary_operator )
         {
-            std::unique_ptr<Type> rhs = std::move( outNodes.back() );
-            outNodes.pop_back();
-            std::unique_ptr<Type> lhs = std::move( outNodes.back() );
-            outNodes.pop_back();
-            outNodes.push_back( std::make_unique<BinaryExpression>( operatorStack.top().second, std::move( lhs ), std::move( rhs ) ) );
+            pushOperatorToOutputStack( operatorStack.top(), outNodes );
         }
-
-        //out.push_back( operatorStack.top() );
+        else if ( operatorStack.top().first == EToken::call )
+        {
+            pushFunctionCallToOutputStack( operatorStack.top(), argsCounters, outNodes );
+        }
         operatorStack.pop();
     }
 
-    /*for ( auto t : out )
-    {
-        std::cout << t.first << " " << t.second << "\n";
-    }
-    std::cout << outNodes.size() << "\n";
-    for ( size_t i = 0; i < outNodes.size(); ++i )
-    {
-        std::cout << outNodes.begin()->get()->show() << "\n";
-        outNodes.pop_front();
-    }*/
     if ( outNodes.size() == 1 )
     {
         return std::move( outNodes.front() );
     }
     else if ( outNodes.size() > 1 )
     {
-        return std::make_unique<Error>( "missing operator after: " + outNodes.front()->show() );
+        printError( "missing operator after: " + outNodes.front()->show() );
+        return nullptr;
     }
     else
     {
-        return std::make_unique<Error>( "nothing to return" );
+        printError( "nothing to return" );
+        return nullptr;
     }
+}
+
+
+std::unique_ptr<Type> Parser::getFunctionDefinition()
+{
+    std::unique_ptr<Type> returnValue;
+    VariableDeclaration functionReturnValue = tokenToVariableDeclaration( getNextToken() );
+    //actually already checked in getNextToken
+    if ( getNextToken().first == EToken::opening_round_bracket )
+    {
+        std::list<VariableDeclaration> arguments;
+        TokenType nextToken = getNextToken();
+        while ( nextToken.first != EToken::closing_round_bracket )
+        {
+            if ( nextToken.first == EToken::variable_declaration )
+            {
+                arguments.push_back( tokenToVariableDeclaration( nextToken ) );
+                if ( peekNextToken().first != EToken::comma && peekNextToken().first != EToken::closing_round_bracket )
+                {
+                    printError( "unexpected token: " + nextToken.second );
+                    returnValue = nullptr;
+                    break;
+                }
+            }
+            else if ( nextToken.first == EToken::comma )
+            {
+                if ( peekNextToken().first != EToken::variable_declaration && peekNextToken().first != EToken::closing_round_bracket )
+                {
+                    printError( "unexpected token: " + nextToken.second );
+                    returnValue = nullptr;
+                    break;
+                }
+            }
+            else
+            {
+                printError( "unexpected token: " + nextToken.second );
+                returnValue = nullptr;
+                break;
+            }
+            nextToken = getNextToken();
+        }
+        if ( nextToken.first == EToken::closing_round_bracket )
+        {
+            //pase function body
+            std::list<std::unique_ptr<Type>> t;
+            returnValue = std::make_unique<FunctionDefinition>( functionReturnValue, arguments, t );
+        }
+    }
+    else
+    {
+        printError( "expected opening round bracket" );
+        returnValue = nullptr;
+    }
+    return returnValue;
 }
 
 
@@ -440,73 +600,78 @@ void Parser::parseFile()
     do
     {
         token = peekNextToken();
-        switch ( token.first )
-        {
-            case EToken::eof:
-            {
-                getNextToken();
-                std::cout << token.first << "\n";
-                break;
-            }
-            case EToken::eol:
-            {
-                getNextToken();
-                std::cout << token.first << "\n";
-                break;
-            }
-            case EToken::integer_literal:
-            {
-                break;
-            }
-            case EToken::floating_point_literal:
-            {
-                break;
-            }
-            case EToken::opening_round_bracket:
-            {
-                break;
-            }
-            case EToken::name:
-            {
-                break;
-            }
-            case EToken::variable_declaration:
-            {
-                getNextToken();
-
-                std::string type = token.second.substr( 0, token.second.find( ' ' ) );
-                std::string name = token.second.substr( token.second.find( ' ' ) + 1, token.second.size() - 1 );
-                //std::cout <<token.second <<"." << type << "." << name << "\n";
-                node = std::make_unique<VariableDeclaration>( type, name );
-                break;
-            }
-            case EToken::error:
-            {
-                std::cout << token.second << "\n";
-                node = std::make_unique<Error>( token.second );
-                break;
-            }
-            default:
-            {
-                std::cout << "unhandled token: " << token.first << " " << token.second << "\n";
-                //error
-                break;
-            }
-        }
+        printError( tokenToString( token.first ) + " " + token.second );
+        //std::cout << token.first << " " << token.second << "\n";
 
         if ( isOperable( token.first ) )
         {
-            mParsedAST.push_back( parseBinaryExpression() );
+            node = parseBinaryExpression();
         }
-        else if ( token.first == EToken::variable_declaration )
+        else
         {
-            mParsedAST.push_back( parseBinaryExpression( std::move( node ) ) );
+            switch ( token.first )
+            {
+                case EToken::eof:
+                {
+                    getNextToken();
+                    break;
+                }
+                case EToken::eol:
+                {
+                    getNextToken();
+                    continue;
+                    break;
+                }
+                case EToken::variable_declaration:
+                {
+                    std::unique_ptr<Type> tempNode = tokenToNode( getNextToken() );
+                    if ( tempNode )
+                    {
+                        node = parseBinaryExpression( std::move( tempNode ) );
+                    }
+                    else
+                    {
+                        node = nullptr;
+                    }
+                    //node = parseBinaryExpression( tokenToNode( getNextToken() ) );
+                    break;
+                }
+                case EToken::function_definition:
+                {
+                    node = getFunctionDefinition();
+                    break;
+                }
+                case EToken::error:
+                {
+                    printError( token.second );
+                    node = nullptr;
+                    break;
+                }
+                default:
+                {
+                    getNextToken();
+                    printError( "unhandled token: " + tokenToString( token.first ) + " " + token.second );
+                    //std::cout << "unhandled token: " << token.first << " " << token.second << "\n";
+                    //error
+                    break;
+                }
+            }
         }
+        if ( node )
+        {
+            mParsedAST.push_back( std::move( node ) );
+        }
+        else
+        {
+            break;
+        }
+
     } while ( token.first != EToken::eof && token.first != EToken::error );
 
 
     for ( auto iter = mParsedAST.begin(); iter != mParsedAST.end(); iter++ )
     {
-        std::cout << iter->get()->show() << "\n";
+        printError( iter->get()->show() );
+        //std::cout << iter->get()->show() << "\n";
     }
 }

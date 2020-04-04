@@ -26,10 +26,15 @@ enum class EToken
     //type,
     //identifier,
     name,
+    call,
     variable_declaration,
+    function_definition,
+    comma,
     kv_true,
     kv_false,
     error
 };
 
-std::ostream& operator<< (std::ostream& os, const EToken& token);
+std::string tokenToString(const EToken& token);
+
+std::ostream& operator<<( std::ostream& os, const EToken& token );

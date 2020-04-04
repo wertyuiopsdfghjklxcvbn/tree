@@ -6,6 +6,7 @@
 #include <sstream>
 #include <stack>
 #include "AST/Type.hpp"
+#include "AST/VariableDeclaration.hpp"
 #include "EToken.hpp"
 
 //"," //"("
@@ -21,15 +22,10 @@ private:
     std::stringstream& mFileBuffer;
     //std::optional<size_t> mIndent;
     std::list<std::unique_ptr<Type>> mParsedAST;
-    //std::shared_ptr<TokenType> mNextToken;
     std::stack<TokenType> mNextTokens;
 
-    //std::list<const char*> types;
-    //TODO add imported types ?
-
-    //    void parseIdentifier();
     //    void parseTopLevel();
-    //    void parseBlock();
+    
 
     std::string parseName();
     std::string parseOperation();
@@ -37,10 +33,19 @@ private:
     TokenType getNextToken();
     TokenType peekNextToken();
 
-    std::unique_ptr<Type> tokenToNode( const TokenType& token );
-    bool isOperable( const EToken& token );
+    VariableDeclaration tokenToVariableDeclaration( const TokenType& token ) const;
+    std::unique_ptr<Type> tokenToNode( const TokenType& token ) const;
+    bool isOperable( const EToken& token ) const;
+
+    void pushOperatorToOutputStack( const TokenType& token, std::list<std::unique_ptr<Type>>& outNodes );
+    void pushFunctionCallToOutputStack( const TokenType& token, std::stack<int>& argsCounters, std::list<std::unique_ptr<Type>>& outNodes );
+    bool popOperatorStack( std::stack<TokenType>& operatorStack, std::stack<int>& argsCounters, std::list<std::unique_ptr<Type>>& outNodes );
     std::unique_ptr<Type> parseBinaryExpression( std::unique_ptr<Type> leftHandSide = nullptr );
 
+    void parseBlock();
+    std::unique_ptr<Type> getFunctionDefinition();
+
+    
 public:
     Parser( std::stringstream& fileBuffer );
 

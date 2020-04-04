@@ -4,6 +4,7 @@ add_executable(tree
     Parser.cpp
     Operators.cpp
     KeyWords.cpp
+    Logging.cpp
     EToken.cpp
 )
 
