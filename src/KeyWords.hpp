@@ -19,4 +19,5 @@ private:
 
 public:
     bool isKeyWord( const std::string& keyWord ) const;
+    EToken getEToken( const std::string& keyWord ) const;
 };

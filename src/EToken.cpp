@@ -106,6 +106,11 @@ std::string tokenToString( const EToken& token )
             returnValue = "comma";
             break;
         }
+        case EToken::indent:
+        {
+            returnValue = "indent";
+            break;
+        }
         case EToken::kv_true:
         {
             returnValue = "kv_true";

@@ -18,5 +18,5 @@ const std::string FunctionDefinition::show() const
     {
         s += i.show() + " ";
     }
-    return "FunctionDefinition: " + mReturnType.show() + " " + std::to_string( mArguments.size() ) + s;
+    return "FunctionDefinition: " + mReturnType.show() + " " + std::to_string( mArguments.size() ) + s + " " + std::to_string( mBody.size() );
 }

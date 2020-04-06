@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cctype>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <xutility>
@@ -17,7 +16,7 @@
 
 
 
-Parser::Parser( std::stringstream& fileBuffer ): mFileBuffer( fileBuffer ) {}
+Parser::Parser( std::stringstream& fileBuffer ): mFileBuffer( fileBuffer ), mIndent( 0 ) {}
 
 
 std::string Parser::parseName()
@@ -95,6 +94,7 @@ TokenType Parser::parseNumber()
 
 TokenType Parser::getNextToken()
 {
+    TokenType returnToken = { EToken::error, "default value" };
     if ( mNextTokens.empty() )
     {
         if ( !mFileBuffer.eof() )
@@ -105,7 +105,7 @@ TokenType Parser::getNextToken()
                 //std::cout << "\"" << mFileBuffer.peek() << "\" " << mFileBuffer.eof() << " " << mFileBuffer.fail() << "\n";
                 if ( std::isdigit( nextCharacter ) )
                 {
-                    return parseNumber();
+                    returnToken = parseNumber();
                 }
                 else if ( std::isalpha( nextCharacter ) || nextCharacter == '_' )
                 {
@@ -113,72 +113,70 @@ TokenType Parser::getNextToken()
 
                     if ( Operators().isBinaryOperator( name ) )
                     {
-                        return { EToken::binary_operator, name };
+                        returnToken = { EToken::binary_operator, name };
                     }
                     else if ( KeyWords().isKeyWord( name ) )
                     {
-                        //if(){}
+                        returnToken = { KeyWords().getEToken( name ), name };
                     }
                     else
                     {
+                        mPreviousToken = returnToken;
                         TokenType nextToken = getNextToken();
                         switch ( nextToken.first )
                         {
-                            //case EToken::name:
-                            //{
-                            //    TokenType afterNextToken = getNextToken();
-                            //    switch ( afterNextToken.first )
-                            //    {
-                            //        case EToken::opening_round_bracket:
-                            //        {
-                            //            printError( "function_definition" );
-                            //            mNextTokens.push( afterNextToken );
-                            //            return { EToken::function_definition, name + ' ' + nextToken.second };
-                            //        }
-                            //        default:
-                            //        {
-                            //            printError( "variable_declaration" );
-                            //            mNextTokens.push( afterNextToken );
-                            //            return { EToken::variable_declaration, name + ' ' + nextToken.second };
-                            //        }
-                            //    }
-                            //}
                             case EToken::opening_round_bracket:
                             {
-                                //printError( "call" );
                                 mNextTokens.push( nextToken );
-                                return { EToken::call, name };
+                                returnToken = { EToken::call, name };
+                                break;
                             }
                             case EToken::call:
                             {
-                                //printError( "function_definition" );
-                                //mNextTokens.push( nextToken );
-                                return { EToken::function_definition, name + ' ' + nextToken.second };
+                                returnToken = { EToken::function_definition, name + ' ' + nextToken.second };
+                                break;
                             }
                             case EToken::name:
                             {
-                                //printError( "variable_declaration" );
-                                //mNextTokens.push( nextToken );
-                                return { EToken::variable_declaration, name + ' ' + nextToken.second };
+                                returnToken = { EToken::variable_declaration, name + ' ' + nextToken.second };
+                                break;
                             }
                             default:
                             {
-                                //printError( "name" );
                                 mNextTokens.push( nextToken );
-                                return { EToken::name, name };
+                                returnToken = { EToken::name, name };
+                                break;
                             }
                         }
                     }
                 }
                 else if ( nextCharacter == ' ' )
                 {
-                    mFileBuffer.get();
-                    return getNextToken();
+                    if ( mPreviousToken.first == EToken::eol )
+                    {
+                        std::string whiteSpaces;
+                        nextCharacter = mFileBuffer.get();
+                        while ( nextCharacter == ' ' )
+                        {
+                            whiteSpaces += nextCharacter;
+                            nextCharacter = mFileBuffer.get();
+                        }
+                        if ( !mFileBuffer.eof() )
+                        {
+                            mFileBuffer.unget();
+                        }
+                        returnToken = { EToken::indent, whiteSpaces };
+                    }
+                    else
+                    {
+                        mFileBuffer.get();
+                        returnToken = getNextToken();
+                    }
                 }
                 else if ( nextCharacter == ',' )
                 {
                     mFileBuffer.get();
-                    return { EToken::comma, "comma" };
+                    returnToken = { EToken::comma, "comma" };
                 }
                 else if ( nextCharacter == '\"' )
                 {
@@ -186,66 +184,67 @@ TokenType Parser::getNextToken()
                 else if ( nextCharacter == '(' )
                 {
                     mFileBuffer.get();
-                    return { EToken::opening_round_bracket, "opening_round_bracket" };
+                    returnToken = { EToken::opening_round_bracket, "opening_round_bracket" };
                 }
                 else if ( nextCharacter == ')' )
                 {
                     mFileBuffer.get();
-                    return { EToken::closing_round_bracket, "closing_round_bracket" };
+                    returnToken = { EToken::closing_round_bracket, "closing_round_bracket" };
                 }
                 else if ( std::ispunct( nextCharacter ) )
                 {
                     std::string binaryOperator = parseOperation();
                     if ( Operators().isBinaryOperator( binaryOperator ) )
                     {
-                        return { EToken::binary_operator, binaryOperator };
+                        returnToken = { EToken::binary_operator, binaryOperator };
                     }
                     else
                     {
-                        return { EToken::error, "incorect binary operator: " + binaryOperator };
+                        returnToken = { EToken::error, "incorect binary operator: " + binaryOperator };
                     }
                 }
                 else if ( nextCharacter == '\n' )
                 {
 
                     mFileBuffer.get();
-                    return { EToken::eol, "eol" };
+                    returnToken = { EToken::eol, "eol" };
                 }
                 else
                 {
                     printError( "nothing was recognized: " + std::to_string( (int)nextCharacter ) + " " + static_cast<char>( nextCharacter ) );
-                    //std::cout << "nothing was recognized: " << (int)nextCharacter << " " << nextCharacter << ".\n";
-                    return { EToken::error, "nothing was recognized" };
+                    returnToken = { EToken::error, "nothing was recognized" };
                 }
             }
             else if ( mFileBuffer.eof() )
             {
-                return { EToken::eof, "eof" };
+                returnToken = { EToken::eof, "eof" };
             }
             else if ( mFileBuffer.fail() )
             {
-                return { EToken::error, "stream fail bit" };
+                returnToken = { EToken::error, "stream fail bit" };
             }
             else if ( mFileBuffer.bad() )
             {
-                return { EToken::error, "stream bad bit" };
+                returnToken = { EToken::error, "stream bad bit" };
             }
             else
             {
-                return { EToken::error, "can`t be reached" };
+                returnToken = { EToken::error, "can`t be reached" };
             }
         }
         else
         {
-            return { EToken::eof, "eof" };
+            returnToken = { EToken::eof, "eof" };
         }
     }
     else
     {
         TokenType returnValue = mNextTokens.top();
         mNextTokens.pop();
-        return returnValue;
+        returnToken = returnValue;
     }
+    mPreviousToken = returnToken;
+    return returnToken;
 }
 
 
@@ -333,7 +332,7 @@ bool Parser::isOperable( const EToken& token ) const
 }
 
 
-void Parser::pushOperatorToOutputStack( const TokenType& token, std::list<std::unique_ptr<Type>>& outNodes )
+void Parser::pushOperatorToOutputStack( const TokenType& token, std::list<std::unique_ptr<Type>>& outNodes ) const
 {
     std::unique_ptr<Type> rhs = std::move( outNodes.back() );
     outNodes.pop_back();
@@ -343,7 +342,7 @@ void Parser::pushOperatorToOutputStack( const TokenType& token, std::list<std::u
 }
 
 
-void Parser::pushFunctionCallToOutputStack( const TokenType& token, std::stack<int>& argsCounters, std::list<std::unique_ptr<Type>>& outNodes )
+void Parser::pushFunctionCallToOutputStack( const TokenType& token, std::stack<int>& argsCounters, std::list<std::unique_ptr<Type>>& outNodes ) const
 {
     //printError( token.second + " " + std::to_string( argsCounters.top() ) );
     std::list<std::unique_ptr<Type>> args;
@@ -358,7 +357,7 @@ void Parser::pushFunctionCallToOutputStack( const TokenType& token, std::stack<i
 }
 
 
-bool Parser::popOperatorStack( std::stack<TokenType>& operatorStack, std::stack<int>& argsCounters, std::list<std::unique_ptr<Type>>& outNodes )
+bool Parser::popOperatorStack( std::stack<TokenType>& operatorStack, std::stack<int>& argsCounters, std::list<std::unique_ptr<Type>>& outNodes ) const
 {
     bool pe = false;
     while ( !operatorStack.empty() )
@@ -402,12 +401,12 @@ std::unique_ptr<Type> Parser::parseBinaryExpression( std::unique_ptr<Type> leftH
     }
 
     std::stack<int> argsCounters;
-    TokenType nextToken = peekNextToken();
+    TokenType nextToken = getNextToken();
 
     while ( isOperable( nextToken.first ) )
     {
-        printError( tokenToString( nextToken.first ) + " " + nextToken.second );
-        nextToken = getNextToken();
+        //printError( tokenToString( nextToken.first ) + " " + nextToken.second );
+        //nextToken = getNextToken();
         if ( nextToken.first != EToken::binary_operator && nextToken.first != EToken::opening_round_bracket &&
              nextToken.first != EToken::closing_round_bracket && nextToken.first != EToken::call && nextToken.first != EToken::comma )
         {
@@ -494,12 +493,12 @@ std::unique_ptr<Type> Parser::parseBinaryExpression( std::unique_ptr<Type> leftH
             printError( "Unknown token: " + nextToken.second );
             return nullptr;
         }
-        nextToken = peekNextToken();
+        nextToken = getNextToken();
     }
 
     if ( ( nextToken.first != EToken::eol ) && ( nextToken.first != EToken::eof ) )
     {
-        printError( "expected end of line" );
+        printError( "expected end of line. Current token: " + tokenToString( nextToken.first ) + " " + nextToken.second + "." );
         return nullptr;
     }
 
@@ -536,6 +535,135 @@ std::unique_ptr<Type> Parser::parseBinaryExpression( std::unique_ptr<Type> leftH
         printError( "nothing to return" );
         return nullptr;
     }
+}
+
+
+
+bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_ptr<Type>>& outAST )
+{
+    TokenType token;
+    std::unique_ptr<Type> node = nullptr;
+    bool isParsed = true;
+    bool isFirstMeaningfulLine = true;
+    size_t blockIndent = parentBlockIndent + mIndent;
+    do
+    {
+        token = peekNextToken();
+        printError( "parse block: " + tokenToString( token.first ) + " " + token.second );
+
+        if ( token.first == EToken::indent )
+        {
+            if ( isFirstMeaningfulLine )
+            {
+                isFirstMeaningfulLine = false;
+            }
+            getNextToken();
+            if ( mIndent == 0 )
+            {
+                mIndent = token.second.length();
+                blockIndent = parentBlockIndent + mIndent;
+                printError( "file indent: " + std::to_string( mIndent ) );
+            }
+
+            if ( blockIndent == token.second.length() )
+            {
+                token = peekNextToken();
+                printError( "parse block: " + tokenToString( token.first ) + " " + token.second );
+                if ( isOperable( token.first ) )
+                {
+                    node = parseBinaryExpression();
+                }
+                else
+                {
+                    switch ( token.first )
+                    {
+                        case EToken::eof:
+                        {
+                            getNextToken();
+                            break;
+                        }
+                        case EToken::eol:
+                        {
+                            getNextToken();
+                            continue;
+                            break;
+                        }
+                        case EToken::variable_declaration:
+                        {
+                            std::unique_ptr<Type> tempNode = tokenToNode( getNextToken() );
+                            if ( tempNode )
+                            {
+                                node = parseBinaryExpression( std::move( tempNode ) );
+                            }
+                            else
+                            {
+                                node = nullptr;
+                            }
+                            break;
+                        }
+                        case EToken::kv_return:
+                        {
+                            getNextToken();
+                            break;
+                        }
+                        case EToken::error:
+                        {
+                            printError( token.second );
+                            node = nullptr;
+                            isParsed = false;
+                            break;
+                        }
+                        default:
+                        {
+                            getNextToken();
+                            printError( "unhandled token: " + tokenToString( token.first ) + " " + token.second );
+                            break;
+                        }
+                    }
+                }
+                if ( node )
+                {
+                    outAST.push_back( std::move( node ) );
+                }
+                else
+                {
+                    break;
+                }
+            }
+            else
+            {
+                isParsed = false;
+                printError( "error: incorrect indent" );
+                break;
+            }
+        }
+        else if ( token.first == EToken::eol )
+        {
+            getNextToken();
+            continue;
+        }
+        else
+        {
+            if ( isFirstMeaningfulLine )
+            {
+                printError( "empty function body" );
+            }
+            else
+            {
+                isParsed = false;
+                printError( "expected indent. Current token " + tokenToString( token.first ) + " " + token.second + "." );
+            }
+            break;
+        }
+
+    } while ( token.first != EToken::eof && token.first != EToken::error );
+
+
+    for ( auto iter = outAST.begin(); iter != outAST.end(); iter++ )
+    {
+        printError( iter->get()->show() );
+    }
+    return isParsed;
 }
 
 
@@ -577,11 +705,21 @@ std::unique_ptr<Type> Parser::getFunctionDefinition()
             }
             nextToken = getNextToken();
         }
-        if ( nextToken.first == EToken::closing_round_bracket )
+        nextToken = getNextToken();
+        if ( nextToken.first == EToken::eol )
         {
-            //pase function body
-            std::list<std::unique_ptr<Type>> t;
-            returnValue = std::make_unique<FunctionDefinition>( functionReturnValue, arguments, t );
+            std::list<std::unique_ptr<Type>> body;
+            parseBlock( 0, body );
+            returnValue = std::make_unique<FunctionDefinition>( functionReturnValue, arguments, body );
+        }
+        else if ( nextToken.first == EToken::eof )
+        {
+            std::list<std::unique_ptr<Type>> body;
+            returnValue = std::make_unique<FunctionDefinition>( functionReturnValue, arguments, body );
+        }
+        else
+        {
+            printError( "expected end of line. Current token: " + tokenToString( nextToken.first ) + " " + nextToken.second + "." );
         }
     }
     else
@@ -600,8 +738,7 @@ void Parser::parseFile()
     do
     {
         token = peekNextToken();
-        printError( tokenToString( token.first ) + " " + token.second );
-        //std::cout << token.first << " " << token.second << "\n";
+        printError( "parse file: " + tokenToString( token.first ) + " " + token.second );
 
         if ( isOperable( token.first ) )
         {
@@ -633,7 +770,6 @@ void Parser::parseFile()
                     {
                         node = nullptr;
                     }
-                    //node = parseBinaryExpression( tokenToNode( getNextToken() ) );
                     break;
                 }
                 case EToken::function_definition:
@@ -651,8 +787,6 @@ void Parser::parseFile()
                 {
                     getNextToken();
                     printError( "unhandled token: " + tokenToString( token.first ) + " " + token.second );
-                    //std::cout << "unhandled token: " << token.first << " " << token.second << "\n";
-                    //error
                     break;
                 }
             }
@@ -672,6 +806,5 @@ void Parser::parseFile()
     for ( auto iter = mParsedAST.begin(); iter != mParsedAST.end(); iter++ )
     {
         printError( iter->get()->show() );
-        //std::cout << iter->get()->show() << "\n";
     }
 }

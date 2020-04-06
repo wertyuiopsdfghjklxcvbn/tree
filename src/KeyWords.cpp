@@ -13,3 +13,8 @@ bool KeyWords::isKeyWord( const std::string& keyWord ) const
         return false;
     }
 }
+
+EToken KeyWords::getEToken( const std::string& keyWord ) const
+{
+    return mKeyWords.find( keyWord )->second;
+}
