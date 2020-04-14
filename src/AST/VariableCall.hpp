@@ -11,5 +11,6 @@ private:
 
 public:
     VariableCall( const std::string& name );
+    virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
     virtual const std::string show() const override;
 };

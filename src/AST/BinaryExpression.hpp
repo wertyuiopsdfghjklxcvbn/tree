@@ -14,6 +14,6 @@ private:
 
 public:
     BinaryExpression( const std::string& operation, std::unique_ptr<Type> leftHandSide, std::unique_ptr<Type> rightHandSide );
-
+    virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
     virtual const std::string show() const override;
 };

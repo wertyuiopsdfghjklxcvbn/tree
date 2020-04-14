@@ -21,11 +21,11 @@ class Parser
 private:
     std::stringstream& mFileBuffer;
     size_t mIndent;
-    std::list<std::unique_ptr<Type>> mParsedAST;
+    //std::list<std::unique_ptr<Type>> mParsedAST;
     std::stack<TokenType> mNextTokens;
     TokenType mPreviousToken;
     //    void parseTopLevel();
-    
+
 
     std::string parseName();
     std::string parseOperation();
@@ -42,12 +42,12 @@ private:
     bool popOperatorStack( std::stack<TokenType>& operatorStack, std::stack<int>& argsCounters, std::list<std::unique_ptr<Type>>& outNodes ) const;
     std::unique_ptr<Type> parseBinaryExpression( std::unique_ptr<Type> leftHandSide = nullptr );
 
-    bool parseBlock( const size_t& currentBlockIndent, std::list<std::unique_ptr<Type>>& outAST );//specify function or cycle or basic
+    bool parseBlock( const size_t& currentBlockIndent, std::list<std::unique_ptr<Type>>& outAST ); //specify function or cycle or basic
     std::unique_ptr<Type> getFunctionDefinition();
 
-    
+
 public:
     Parser( std::stringstream& fileBuffer );
 
-    void parseFile();
+    bool parseFile( std::list<std::unique_ptr<Type>>& parsedAST );
 };

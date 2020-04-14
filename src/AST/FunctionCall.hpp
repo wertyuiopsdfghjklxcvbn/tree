@@ -15,5 +15,6 @@ private:
 
 public:
     FunctionCall( const std::string& name, std::list<std::unique_ptr<Type>>& arguments );
+    virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
     virtual const std::string show() const override;
 };

@@ -6,6 +6,7 @@ add_executable(tree
     KeyWords.cpp
     Logging.cpp
     EToken.cpp
+    IRGenerator.cpp
 )
 
 target_link_libraries(tree AST)

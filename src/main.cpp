@@ -5,7 +5,9 @@
 #include <sstream>
 #include <string>
 
+#include "IRGenerator.hpp"
 #include "Parser.hpp"
+
 
 
 
@@ -118,8 +120,18 @@ int main( const int argc, const char* argv[] )
             std::stringstream fileBuffer;
             if ( readFileBuffer( rootFilePath, fileBuffer ) )
             {
+                std::list<std::unique_ptr<Type>> parsedAST;
                 Parser parser( fileBuffer );
-                parser.parseFile();
+                if ( parser.parseFile( parsedAST ) )
+                {
+                    std::string pathAsString = rootFilePath.generic_string();
+                    IRGenerator irGenerator( parsedAST, pathAsString );
+                    irGenerator.generate();
+                }
+                else
+                {
+                    std::cout << "fail to parse\n";
+                }
 
                 //parseFile( fileBuffer );
             }

@@ -731,8 +731,9 @@ std::unique_ptr<Type> Parser::getFunctionDefinition()
 }
 
 
-void Parser::parseFile()
+bool Parser::parseFile( std::list<std::unique_ptr<Type>>& parsedAST )
 {
+    bool isParsed = true;
     TokenType token;
     std::unique_ptr<Type> node = nullptr;
     do
@@ -781,19 +782,22 @@ void Parser::parseFile()
                 {
                     printError( token.second );
                     node = nullptr;
+                    isParsed = false;
                     break;
                 }
                 default:
                 {
                     getNextToken();
                     printError( "unhandled token: " + tokenToString( token.first ) + " " + token.second );
+                    isParsed = false;
                     break;
                 }
             }
         }
         if ( node )
         {
-            mParsedAST.push_back( std::move( node ) );
+            parsedAST.push_back( std::move( node ) );
+            //mParsedAST.push_back( std::move( node ) );
         }
         else
         {
@@ -803,8 +807,10 @@ void Parser::parseFile()
     } while ( token.first != EToken::eof && token.first != EToken::error );
 
 
-    for ( auto iter = mParsedAST.begin(); iter != mParsedAST.end(); iter++ )
+    //for ( auto iter = mParsedAST.begin(); iter != mParsedAST.end(); iter++ )
+    for ( auto iter = parsedAST.begin(); iter != parsedAST.end(); iter++ )
     {
         printError( iter->get()->show() );
     }
+    return isParsed;
 }

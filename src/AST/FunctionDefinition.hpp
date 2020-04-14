@@ -17,5 +17,6 @@ private:
 
 public:
     FunctionDefinition( const VariableDeclaration& returnType, const std::list<VariableDeclaration>& arguments, std::list<std::unique_ptr<Type>>& body );
+    virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
     virtual const std::string show() const override;
 };
