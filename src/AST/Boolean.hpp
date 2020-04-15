@@ -1,12 +1,18 @@
 #pragma once
 
-#include "Type.hpp"
+#include "Node.hpp"
 
-class Boolean: public Type
+
+namespace ast
 {
-private:
-    bool mValue;
 
-public:
-    Boolean( const bool& value );
-};
+    class Boolean: public Node
+    {
+    private:
+        bool mValue;
+
+    public:
+        Boolean( const bool& value );
+    };
+
+} // namespace ast

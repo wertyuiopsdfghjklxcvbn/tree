@@ -3,42 +3,47 @@
 #include "llvm/IR/Module.h"
 
 
-Return::Return( std::unique_ptr<Type> returnValue ): mReturnValue( std::move( returnValue ) ) {}
-
-
-llvm::Value* Return::generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const
+namespace ast
 {
-    llvm::ReturnInst* returnInst;
-    if ( mReturnValue )
+
+    Return::Return( std::unique_ptr<Node> returnValue ): mReturnValue( std::move( returnValue ) ) {}
+
+
+    llvm::Value* Return::generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const
     {
-        llvm::Value* value = mReturnValue->generate( module, basicBlock );
-        if ( value != nullptr )
+        llvm::ReturnInst* returnInst;
+        if ( mReturnValue )
         {
-            returnInst = llvm::ReturnInst::Create( module.getContext(), value );
+            llvm::Value* value = mReturnValue->generate( module, basicBlock );
+            if ( value != nullptr )
+            {
+                returnInst = llvm::ReturnInst::Create( module.getContext(), value );
+            }
+            else
+            {
+                //err
+                return nullptr;
+            }
         }
         else
         {
-            //err
-            return nullptr;
+            returnInst = llvm::ReturnInst::Create( module.getContext() );
+        }
+        basicBlock->getInstList().push_back( returnInst );
+        return nullptr;
+    }
+
+
+    const std::string Return::show() const
+    {
+        if ( mReturnValue )
+        {
+            return "Return " + mReturnValue->show();
+        }
+        else
+        {
+            return "Return";
         }
     }
-    else
-    {
-        returnInst = llvm::ReturnInst::Create( module.getContext() );
-    }
-    basicBlock->getInstList().push_back( returnInst );
-    return nullptr;
-}
 
-
-const std::string Return::show() const
-{
-    if ( mReturnValue )
-    {
-        return "Return " + mReturnValue->show();
-    }
-    else
-    {
-        return "Return";
-    }
-}
+} // namespace ast

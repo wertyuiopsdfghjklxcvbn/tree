@@ -2,18 +2,18 @@
 #include <cctype>
 #include <memory>
 #include <string>
-#include <xutility>
 
-#include "AST/BinaryExpression.hpp"
-#include "AST/FunctionCall.hpp"
-#include "AST/FunctionDefinition.hpp"
-#include "AST/Number.hpp"
-#include "AST/Return.hpp"
-#include "AST/VariableCall.hpp"
 #include "KeyWords.hpp"
 #include "Logging.hpp"
 #include "Operators.hpp"
 #include "Parser.hpp"
+#include "ast/BinaryExpression.hpp"
+#include "ast/FunctionCall.hpp"
+#include "ast/FunctionDefinition.hpp"
+#include "ast/Number.hpp"
+#include "ast/Return.hpp"
+#include "ast/VariableCall.hpp"
+
 
 
 
@@ -259,37 +259,37 @@ TokenType Parser::peekNextToken()
 }
 
 
-VariableDeclaration Parser::tokenToVariableDeclaration( const TokenType& token ) const
+ast::VariableDeclaration Parser::tokenToVariableDeclaration( const TokenType& token ) const
 {
     std::string type = token.second.substr( 0, token.second.find( ' ' ) );
     std::string name = token.second.substr( token.second.find( ' ' ) + 1, token.second.size() - 1 );
-    return VariableDeclaration( type, name );
+    return ast::VariableDeclaration( type, name );
 }
 
 
-std::unique_ptr<Type> Parser::tokenToNode( const TokenType& token ) const
+std::unique_ptr<ast::Node> Parser::tokenToNode( const TokenType& token ) const
 {
-    std::unique_ptr<Type> returnNode;
+    std::unique_ptr<ast::Node> returnNode;
     switch ( token.first )
     {
         case EToken::integer_literal:
         {
-            returnNode = std::make_unique<Number>( token.second, false );
+            returnNode = std::make_unique<ast::Number>( token.second, false );
             break;
         }
         case EToken::floating_point_literal:
         {
-            returnNode = std::make_unique<Number>( token.second, true );
+            returnNode = std::make_unique<ast::Number>( token.second, true );
             break;
         }
         case EToken::name:
         {
-            returnNode = std::make_unique<VariableCall>( token.second );
+            returnNode = std::make_unique<ast::VariableCall>( token.second );
             break;
         }
         case EToken::variable_declaration:
         {
-            returnNode = std::make_unique<VariableDeclaration>( tokenToVariableDeclaration( token ) );
+            returnNode = std::make_unique<ast::VariableDeclaration>( tokenToVariableDeclaration( token ) );
             break;
         }
         default:
@@ -333,32 +333,32 @@ bool Parser::isOperable( const EToken& token ) const
 }
 
 
-void Parser::pushOperatorToOutputStack( const TokenType& token, std::list<std::unique_ptr<Type>>& outNodes ) const
+void Parser::pushOperatorToOutputStack( const TokenType& token, std::list<std::unique_ptr<ast::Node>>& outNodes ) const
 {
-    std::unique_ptr<Type> rhs = std::move( outNodes.back() );
+    std::unique_ptr<ast::Node> rhs = std::move( outNodes.back() );
     outNodes.pop_back();
-    std::unique_ptr<Type> lhs = std::move( outNodes.back() );
+    std::unique_ptr<ast::Node> lhs = std::move( outNodes.back() );
     outNodes.pop_back();
-    outNodes.push_back( std::make_unique<BinaryExpression>( token.second, std::move( lhs ), std::move( rhs ) ) );
+    outNodes.push_back( std::make_unique<ast::BinaryExpression>( token.second, std::move( lhs ), std::move( rhs ) ) );
 }
 
 
-void Parser::pushFunctionCallToOutputStack( const TokenType& token, std::stack<int>& argsCounters, std::list<std::unique_ptr<Type>>& outNodes ) const
+void Parser::pushFunctionCallToOutputStack( const TokenType& token, std::stack<int>& argsCounters, std::list<std::unique_ptr<ast::Node>>& outNodes ) const
 {
     //printError( token.second + " " + std::to_string( argsCounters.top() ) );
-    std::list<std::unique_ptr<Type>> args;
+    std::list<std::unique_ptr<ast::Node>> args;
     for ( size_t i = 0; i < argsCounters.top(); ++i )
     {
         args.push_back( std::move( outNodes.back() ) );
         outNodes.pop_back();
     }
     args.reverse();
-    outNodes.push_back( std::make_unique<FunctionCall>( token.second, args ) );
+    outNodes.push_back( std::make_unique<ast::FunctionCall>( token.second, args ) );
     argsCounters.pop();
 }
 
 
-bool Parser::popOperatorStack( std::stack<TokenType>& operatorStack, std::stack<int>& argsCounters, std::list<std::unique_ptr<Type>>& outNodes ) const
+bool Parser::popOperatorStack( std::stack<TokenType>& operatorStack, std::stack<int>& argsCounters, std::list<std::unique_ptr<ast::Node>>& outNodes ) const
 {
     bool pe = false;
     while ( !operatorStack.empty() )
@@ -391,9 +391,9 @@ bool Parser::popOperatorStack( std::stack<TokenType>& operatorStack, std::stack<
 
 
 //https://en.wikipedia.org/wiki/Shunting-yard_algorithm
-std::unique_ptr<Type> Parser::parseBinaryExpression( std::unique_ptr<Type> leftHandSide )
+std::unique_ptr<ast::Node> Parser::parseBinaryExpression( std::unique_ptr<ast::Node> leftHandSide )
 {
-    std::list<std::unique_ptr<Type>> outNodes;
+    std::list<std::unique_ptr<ast::Node>> outNodes;
     std::stack<TokenType> operatorStack;
 
     if ( leftHandSide )
@@ -411,7 +411,7 @@ std::unique_ptr<Type> Parser::parseBinaryExpression( std::unique_ptr<Type> leftH
         if ( nextToken.first != EToken::binary_operator && nextToken.first != EToken::opening_round_bracket &&
              nextToken.first != EToken::closing_round_bracket && nextToken.first != EToken::call && nextToken.first != EToken::comma )
         {
-            std::unique_ptr<Type> tempNode = tokenToNode( nextToken );
+            std::unique_ptr<ast::Node> tempNode = tokenToNode( nextToken );
             if ( tempNode )
             {
                 outNodes.push_back( std::move( tempNode ) );
@@ -539,10 +539,10 @@ std::unique_ptr<Type> Parser::parseBinaryExpression( std::unique_ptr<Type> leftH
 
 
 
-bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_ptr<Type>>& outAST )
+bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_ptr<ast::Node>>& outAST )
 {
     TokenType token;
-    std::unique_ptr<Type> node = nullptr;
+    std::unique_ptr<ast::Node> node = nullptr;
     bool isParsed = true;
     bool isFirstMeaningfulLine = true;
     size_t blockIndent = parentBlockIndent + mIndent;
@@ -590,7 +590,7 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
                         }
                         case EToken::variable_declaration:
                         {
-                            std::unique_ptr<Type> tempNode = tokenToNode( getNextToken() );
+                            std::unique_ptr<ast::Node> tempNode = tokenToNode( getNextToken() );
                             if ( tempNode )
                             {
                                 node = parseBinaryExpression( std::move( tempNode ) );
@@ -610,7 +610,7 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
                                 node = parseBinaryExpression();
                                 if ( node )
                                 {
-                                    node = std::make_unique<Return>( std::move( node ) );
+                                    node = std::make_unique<ast::Return>( std::move( node ) );
                                 }
                                 else
                                 {
@@ -620,7 +620,7 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
                             }
                             else if ( nextToken.first == EToken::eol || nextToken.first == EToken::eof )
                             {
-                                node = std::make_unique<Return>();
+                                node = std::make_unique<ast::Return>();
                                 getNextToken();
                             }
                             else
@@ -691,14 +691,14 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
 }
 
 
-std::unique_ptr<Type> Parser::getFunctionDefinition()
+std::unique_ptr<ast::Node> Parser::getFunctionDefinition()
 {
-    std::unique_ptr<Type> returnValue;
-    VariableDeclaration functionReturnValue = tokenToVariableDeclaration( getNextToken() );
+    std::unique_ptr<ast::Node> returnValue;
+    ast::VariableDeclaration functionReturnValue = tokenToVariableDeclaration( getNextToken() );
     //actually already checked in getNextToken
     if ( getNextToken().first == EToken::opening_round_bracket )
     {
-        std::list<VariableDeclaration> arguments;
+        std::list<ast::VariableDeclaration> arguments;
         TokenType nextToken = getNextToken();
         while ( nextToken.first != EToken::closing_round_bracket )
         {
@@ -732,14 +732,14 @@ std::unique_ptr<Type> Parser::getFunctionDefinition()
         nextToken = getNextToken();
         if ( nextToken.first == EToken::eol )
         {
-            std::list<std::unique_ptr<Type>> body;
+            std::list<std::unique_ptr<ast::Node>> body;
             parseBlock( 0, body );
-            returnValue = std::make_unique<FunctionDefinition>( functionReturnValue, arguments, body );
+            returnValue = std::make_unique<ast::FunctionDefinition>( functionReturnValue, arguments, body );
         }
         else if ( nextToken.first == EToken::eof )
         {
-            std::list<std::unique_ptr<Type>> body;
-            returnValue = std::make_unique<FunctionDefinition>( functionReturnValue, arguments, body );
+            std::list<std::unique_ptr<ast::Node>> body;
+            returnValue = std::make_unique<ast::FunctionDefinition>( functionReturnValue, arguments, body );
         }
         else
         {
@@ -755,11 +755,11 @@ std::unique_ptr<Type> Parser::getFunctionDefinition()
 }
 
 
-bool Parser::parseFile( std::list<std::unique_ptr<Type>>& parsedAST )
+bool Parser::parseFile( std::list<std::unique_ptr<ast::Node>>& parsedAST )
 {
     bool isParsed = true;
     TokenType token;
-    std::unique_ptr<Type> node = nullptr;
+    std::unique_ptr<ast::Node> node = nullptr;
     do
     {
         token = peekNextToken();
@@ -786,7 +786,7 @@ bool Parser::parseFile( std::list<std::unique_ptr<Type>>& parsedAST )
                 }
                 case EToken::variable_declaration:
                 {
-                    std::unique_ptr<Type> tempNode = tokenToNode( getNextToken() );
+                    std::unique_ptr<ast::Node> tempNode = tokenToNode( getNextToken() );
                     if ( tempNode )
                     {
                         node = parseBinaryExpression( std::move( tempNode ) );

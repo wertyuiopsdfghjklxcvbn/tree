@@ -2,15 +2,20 @@
 
 #include <memory>
 
-#include "Type.hpp"
+#include "Node.hpp"
 
-class Return: public Type
+namespace ast
 {
-private:
-    std::unique_ptr<Type> mReturnValue;
 
-public:
-    Return( std::unique_ptr<Type> returnValue = nullptr );
-    virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
-    virtual const std::string show() const override;
-};
+    class Return: public Node
+    {
+    private:
+        std::unique_ptr<Node> mReturnValue;
+
+    public:
+        Return( std::unique_ptr<Node> returnValue = nullptr );
+        virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
+        virtual const std::string show() const override;
+    };
+
+} // namespace ast

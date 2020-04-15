@@ -4,19 +4,24 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include "Type.hpp"
+#include "Node.hpp"
 #include "VariableDeclaration.hpp"
 
 
-class FunctionDefinition: public Type
+namespace ast
 {
-private:
-    VariableDeclaration mReturnType;
-    std::list<VariableDeclaration> mArguments;
-    std::list<std::unique_ptr<Type>> mBody;
 
-public:
-    FunctionDefinition( const VariableDeclaration& returnType, const std::list<VariableDeclaration>& arguments, std::list<std::unique_ptr<Type>>& body );
-    virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
-    virtual const std::string show() const override;
-};
+    class FunctionDefinition: public Node
+    {
+    private:
+        VariableDeclaration mReturnType;
+        std::list<VariableDeclaration> mArguments;
+        std::list<std::unique_ptr<Node>> mBody;
+
+    public:
+        FunctionDefinition( const VariableDeclaration& returnType, const std::list<VariableDeclaration>& arguments, std::list<std::unique_ptr<Node>>& body );
+        virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
+        virtual const std::string show() const override;
+    };
+
+} // namespace ast

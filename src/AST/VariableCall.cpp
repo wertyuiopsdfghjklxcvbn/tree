@@ -5,50 +5,55 @@
 #include "llvm/IR/ValueSymbolTable.h"
 
 
-VariableCall::VariableCall( const std::string& name ): mName( name ) {}
-
-
-llvm::Value* VariableCall::generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const
+namespace ast
 {
-    if ( basicBlock != nullptr )
+
+    VariableCall::VariableCall( const std::string& name ): mName( name ) {}
+
+
+    llvm::Value* VariableCall::generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const
     {
-        llvm::Function* function = basicBlock->getParent();
-        if ( function != nullptr )
+        if ( basicBlock != nullptr )
         {
-            llvm::Function::arg_iterator functionIt = function->arg_begin();
-            while ( functionIt != function->arg_end() )
+            llvm::Function* function = basicBlock->getParent();
+            if ( function != nullptr )
             {
-                if ( functionIt->getName() == mName )
+                llvm::Function::arg_iterator functionIt = function->arg_begin();
+                while ( functionIt != function->arg_end() )
                 {
-                    return functionIt;
+                    if ( functionIt->getName() == mName )
+                    {
+                        return functionIt;
+                    }
+                    ++functionIt;
                 }
-                ++functionIt;
             }
-        }
-        llvm::ValueSymbolTable* valueSymbolTable = basicBlock->getValueSymbolTable();
-        if ( valueSymbolTable != nullptr )
-        {
-            llvm::Value* foundValue = valueSymbolTable->lookup( mName );
-            if ( foundValue != nullptr )
+            llvm::ValueSymbolTable* valueSymbolTable = basicBlock->getValueSymbolTable();
+            if ( valueSymbolTable != nullptr )
             {
-                return foundValue;
+                llvm::Value* foundValue = valueSymbolTable->lookup( mName );
+                if ( foundValue != nullptr )
+                {
+                    return foundValue;
+                }
             }
         }
+        llvm::GlobalValue* foundValue = module.getNamedValue( mName );
+        if ( foundValue )
+        {
+            return foundValue;
+        }
+        else
+        {
+            //err
+            return nullptr;
+        }
     }
-    llvm::GlobalValue* foundValue = module.getNamedValue( mName );
-    if ( foundValue )
-    {
-        return foundValue;
-    }
-    else
-    {
-        //err
-        return nullptr;
-    }
-}
 
 
-const std::string VariableCall::show() const
-{
-    return "VariableCall " + mName;
-}
+    const std::string VariableCall::show() const
+    {
+        return "VariableCall " + mName;
+    }
+
+} // namespace ast

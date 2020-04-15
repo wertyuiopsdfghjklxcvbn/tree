@@ -1,16 +1,21 @@
 #pragma once
 
 #include <string>
-#include "Type.hpp"
+#include "Node.hpp"
 
-class Number: public Type
+namespace ast
 {
-private:
-    std::string mNumber;
-    bool mIsFpn;
 
-public:
-    Number( const std::string& number, const bool& fpn );
-    virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
-    virtual const std::string show() const override;
-};
+    class Number: public Node
+    {
+    private:
+        std::string mNumber;
+        bool mIsFpn;
+
+    public:
+        Number( const std::string& number, const bool& fpn );
+        virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
+        virtual const std::string show() const override;
+    };
+
+} // namespace ast

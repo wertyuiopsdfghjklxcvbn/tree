@@ -2,18 +2,22 @@
 
 #include <memory>
 #include <string>
-#include "Type.hpp"
+#include "Node.hpp"
 
-
-class BinaryExpression: public Type
+namespace ast
 {
-private:
-    std::string mOperation;
-    std::unique_ptr<Type> mLeftHandSide;
-    std::unique_ptr<Type> mRightHandSide;
 
-public:
-    BinaryExpression( const std::string& operation, std::unique_ptr<Type> leftHandSide, std::unique_ptr<Type> rightHandSide );
-    virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
-    virtual const std::string show() const override;
-};
+    class BinaryExpression: public Node
+    {
+    private:
+        std::string mOperation;
+        std::unique_ptr<Node> mLeftHandSide;
+        std::unique_ptr<Node> mRightHandSide;
+
+    public:
+        BinaryExpression( const std::string& operation, std::unique_ptr<Node> leftHandSide, std::unique_ptr<Node> rightHandSide );
+        virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
+        virtual const std::string show() const override;
+    };
+
+} // namespace ast

@@ -2,15 +2,15 @@
 
 #include <list>
 #include <memory>
-#include "AST/Type.hpp"
+#include "ast/Node.hpp"
 
 class IRGenerator
 {
 private:
-    std::list<std::unique_ptr<Type>>& mParsedAST;
+    std::list<std::unique_ptr<ast::Node>>& mParsedAST;
     const std::string mModuleName;
 
 public:
-    IRGenerator( std::list<std::unique_ptr<Type>>& parsedAST, const std::string& moduleName );
+    IRGenerator( std::list<std::unique_ptr<ast::Node>>& parsedAST, const std::string& moduleName );
     bool generate();
 };

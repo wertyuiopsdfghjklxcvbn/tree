@@ -1,4 +1,4 @@
-add_subdirectory(AST)
+add_subdirectory(ast)
 add_executable(tree 
     main.cpp
     Parser.cpp

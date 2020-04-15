@@ -10,7 +10,7 @@
 
 
 
-IRGenerator::IRGenerator( std::list<std::unique_ptr<Type>>& parsedAST, const std::string& moduleName ): mParsedAST( parsedAST ), mModuleName( moduleName ) {}
+IRGenerator::IRGenerator( std::list<std::unique_ptr<ast::Node>>& parsedAST, const std::string& moduleName ): mParsedAST( parsedAST ), mModuleName( moduleName ) {}
 
 bool IRGenerator::generate()
 {
@@ -22,7 +22,7 @@ bool IRGenerator::generate()
     //llvm::Function* F = llvm::Function::Create( FT, llvm::Function::ExternalLinkage, "main", *module );
     //llvm::BasicBlock* BB = llvm::BasicBlock::Create( context, "EntryBlock", F );
 
-    for ( std::list<std::unique_ptr<Type>>::iterator iter = mParsedAST.begin(); iter != mParsedAST.end(); iter++ )
+    for ( std::list<std::unique_ptr<ast::Node>>::iterator iter = mParsedAST.begin(); iter != mParsedAST.end(); iter++ )
     {
         llvm::Value* t = iter->get()->generate( *module, nullptr );
 

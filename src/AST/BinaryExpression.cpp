@@ -6,97 +6,101 @@
 #include "llvm/IR/Module.h"
 
 
-
-BinaryExpression::BinaryExpression( const std::string& operation, std::unique_ptr<Type> leftHandSide, std::unique_ptr<Type> rightHandSide ):
-    mOperation( std::move( operation ) ),
-    mLeftHandSide( std::move( leftHandSide ) ),
-    mRightHandSide( std::move( rightHandSide ) )
+namespace ast
 {
-}
 
-
-llvm::Value* BinaryExpression::generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const
-{
-    llvm::Value* lhs = mLeftHandSide->generate( module, basicBlock );
-    llvm::Value* rhs = mRightHandSide->generate( module, basicBlock );
-    if ( lhs != nullptr && rhs != nullptr )
+    BinaryExpression::BinaryExpression( const std::string& operation, std::unique_ptr<Node> leftHandSide, std::unique_ptr<Node> rightHandSide ):
+        mOperation( std::move( operation ) ),
+        mLeftHandSide( std::move( leftHandSide ) ),
+        mRightHandSide( std::move( rightHandSide ) )
     {
+    }
 
-        //TODO rewrite as enum
-        if ( mOperation == "+" )
+
+    llvm::Value* BinaryExpression::generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const
+    {
+        llvm::Value* lhs = mLeftHandSide->generate( module, basicBlock );
+        llvm::Value* rhs = mRightHandSide->generate( module, basicBlock );
+        if ( lhs != nullptr && rhs != nullptr )
         {
-            if ( basicBlock != nullptr )
+
+            //TODO rewrite as enum
+            if ( mOperation == "+" )
             {
-                if ( rhs->getType()->isPointerTy() )
+                if ( basicBlock != nullptr )
                 {
-                    llvm::LoadInst* loadInst = new llvm::LoadInst( rhs->getType()->getPointerElementType(), rhs, "loadTempVariable" );
-                    basicBlock->getInstList().push_back( loadInst );
-                    rhs = loadInst;
-                }
-                if ( lhs->getType()->isPointerTy() )
-                {
-                    llvm::LoadInst* loadInst = new llvm::LoadInst( lhs->getType()->getPointerElementType(), lhs, "loadTempVariable" );
-                    basicBlock->getInstList().push_back( loadInst );
-                    lhs = loadInst;
-                }
-                //TODO diferent for fpn
-                llvm::Instruction* t = llvm::BinaryOperator::Create( llvm::Instruction::Add, lhs, rhs );
-                basicBlock->getInstList().push_back( t );
-                return t;
-            }
-            else
-            {
-                return nullptr; //make global
-            }
-        }
-        else if ( mOperation == "=" )
-        {
-            if ( basicBlock != nullptr )
-            {
-                llvm::StoreInst* storeInst;
-                if ( rhs->getType()->isPointerTy() )
-                {
-                    llvm::LoadInst* loadInst = new llvm::LoadInst( lhs->getType()->getPointerElementType(), rhs, "assignmentTempVariable" );
-                    basicBlock->getInstList().push_back( loadInst );
-                    storeInst = new llvm::StoreInst( loadInst, lhs );
+                    if ( rhs->getType()->isPointerTy() )
+                    {
+                        llvm::LoadInst* loadInst = new llvm::LoadInst( rhs->getType()->getPointerElementType(), rhs, "loadTempVariable" );
+                        basicBlock->getInstList().push_back( loadInst );
+                        rhs = loadInst;
+                    }
+                    if ( lhs->getType()->isPointerTy() )
+                    {
+                        llvm::LoadInst* loadInst = new llvm::LoadInst( lhs->getType()->getPointerElementType(), lhs, "loadTempVariable" );
+                        basicBlock->getInstList().push_back( loadInst );
+                        lhs = loadInst;
+                    }
+                    //TODO diferent for fpn
+                    llvm::Instruction* t = llvm::BinaryOperator::Create( llvm::Instruction::Add, lhs, rhs );
+                    basicBlock->getInstList().push_back( t );
+                    return t;
                 }
                 else
                 {
-                    storeInst = new llvm::StoreInst( rhs, lhs );
+                    return nullptr; //make global
                 }
-                basicBlock->getInstList().push_back( storeInst );
-                return nullptr;
             }
-            else
+            else if ( mOperation == "=" )
             {
-                llvm::GlobalVariable* foundValue = module.getGlobalVariable( lhs->getName() );
-                if ( foundValue )
+                if ( basicBlock != nullptr )
                 {
-                    //init global var
-                    //llvm::Constant * constant = llvm::ConstantInt::get( llvm::Type::getInt32Ty( module.getContext() ), 5 );
-                    //foundValue->setInitializer( constant );
+                    llvm::StoreInst* storeInst;
+                    if ( rhs->getType()->isPointerTy() )
+                    {
+                        llvm::LoadInst* loadInst = new llvm::LoadInst( lhs->getType()->getPointerElementType(), rhs, "assignmentTempVariable" );
+                        basicBlock->getInstList().push_back( loadInst );
+                        storeInst = new llvm::StoreInst( loadInst, lhs );
+                    }
+                    else
+                    {
+                        storeInst = new llvm::StoreInst( rhs, lhs );
+                    }
+                    basicBlock->getInstList().push_back( storeInst );
+                    return nullptr;
                 }
                 else
                 {
-                    //err
+                    llvm::GlobalVariable* foundValue = module.getGlobalVariable( lhs->getName() );
+                    if ( foundValue )
+                    {
+                        //init global var
+                        //llvm::Constant * constant = llvm::ConstantInt::get( llvm::Type::getInt32Ty( module.getContext() ), 5 );
+                        //foundValue->setInitializer( constant );
+                    }
+                    else
+                    {
+                        //err
+                    }
+                    return nullptr;
                 }
+            }
+            else
+            {
                 return nullptr;
             }
         }
         else
         {
+            //err
             return nullptr;
         }
     }
-    else
+
+
+    const std::string BinaryExpression::show() const
     {
-        //err
-        return nullptr;
+        return ( "BinaryOperation: " + mOperation + "\n" + mLeftHandSide->show() + "\n" + mRightHandSide->show() + "\n" );
     }
-}
 
-
-const std::string BinaryExpression::show() const
-{
-    return ( "BinaryOperation: " + mOperation + "\n" + mLeftHandSide->show() + "\n" + mRightHandSide->show() + "\n" );
-}
+} // namespace ast

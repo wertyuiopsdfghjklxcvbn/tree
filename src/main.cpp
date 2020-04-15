@@ -1,13 +1,11 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-
 #include <sstream>
 #include <string>
 
 #include "IRGenerator.hpp"
 #include "Parser.hpp"
-
 
 
 
@@ -120,10 +118,12 @@ int main( const int argc, const char* argv[] )
             std::stringstream fileBuffer;
             if ( readFileBuffer( rootFilePath, fileBuffer ) )
             {
-                std::list<std::unique_ptr<Type>> parsedAST;
+                std::list<std::unique_ptr<ast::Node>> parsedAST;
                 Parser parser( fileBuffer );
                 if ( parser.parseFile( parsedAST ) )
                 {
+                    std::cout
+                        << "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\n";
                     std::string pathAsString = rootFilePath.generic_string();
                     IRGenerator irGenerator( parsedAST, pathAsString );
                     irGenerator.generate();

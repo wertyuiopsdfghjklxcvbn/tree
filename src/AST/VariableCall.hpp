@@ -1,16 +1,22 @@
 #pragma once
 
 #include <string>
-#include "Type.hpp"
+#include "Node.hpp"
 
 
-class VariableCall: public Type
+namespace ast
 {
-private:
-    std::string mName;
 
-public:
-    VariableCall( const std::string& name );
-    virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
-    virtual const std::string show() const override;
-};
+    class VariableCall: public Node
+    {
+    private:
+        std::string mName;
+
+    public:
+        VariableCall( const std::string& name );
+        virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
+        virtual const std::string show() const override;
+    };
+
+
+} // namespace ast

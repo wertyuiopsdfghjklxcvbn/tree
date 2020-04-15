@@ -3,18 +3,22 @@
 #include <list>
 #include <memory>
 #include <string>
-#include "Type.hpp"
+#include "Node.hpp"
 
 
-
-class FunctionCall: public Type
+namespace ast
 {
-private:
-    std::string mName;
-    std::list<std::unique_ptr<Type>> mArguments;
 
-public:
-    FunctionCall( const std::string& name, std::list<std::unique_ptr<Type>>& arguments );
-    virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
-    virtual const std::string show() const override;
-};
+    class FunctionCall: public Node
+    {
+    private:
+        std::string mName;
+        std::list<std::unique_ptr<Node>> mArguments;
+
+    public:
+        FunctionCall( const std::string& name, std::list<std::unique_ptr<Node>>& arguments );
+        virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
+        virtual const std::string show() const override;
+    };
+
+} // namespace ast
