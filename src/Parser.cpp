@@ -8,6 +8,7 @@
 #include "AST/FunctionCall.hpp"
 #include "AST/FunctionDefinition.hpp"
 #include "AST/Number.hpp"
+#include "AST/Return.hpp"
 #include "AST/VariableCall.hpp"
 #include "KeyWords.hpp"
 #include "Logging.hpp"
@@ -460,7 +461,7 @@ std::unique_ptr<Type> Parser::parseBinaryExpression( std::unique_ptr<Type> leftH
         }
         else if ( nextToken.first == EToken::opening_round_bracket )
         {
-            if ( operatorStack.top().first != EToken::call )
+            if ( !operatorStack.empty() && operatorStack.top().first != EToken::call )
             {
                 //count first arg
                 if ( argsCounters.size() > 0 && argsCounters.top() == 0 )
@@ -477,7 +478,6 @@ std::unique_ptr<Type> Parser::parseBinaryExpression( std::unique_ptr<Type> leftH
         }
         else if ( nextToken.first == EToken::closing_round_bracket )
         {
-
             if ( popOperatorStack( operatorStack, argsCounters, outNodes ) )
             {
                 operatorStack.pop();
@@ -604,6 +604,30 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
                         case EToken::kv_return:
                         {
                             getNextToken();
+                            TokenType nextToken = peekNextToken();
+                            if ( isOperable( nextToken.first ) )
+                            {
+                                node = parseBinaryExpression();
+                                if ( node )
+                                {
+                                    node = std::make_unique<Return>( std::move( node ) );
+                                }
+                                else
+                                {
+                                    isParsed = false;
+                                    node = nullptr;
+                                }
+                            }
+                            else if ( nextToken.first == EToken::eol || nextToken.first == EToken::eof )
+                            {
+                                node = std::make_unique<Return>();
+                                getNextToken();
+                            }
+                            else
+                            {
+                                printError( "expected end of line. Current token: " + tokenToString( nextToken.first ) + " " + nextToken.second + "." );
+                                node = nullptr;
+                            }
                             break;
                         }
                         case EToken::error:
@@ -656,7 +680,7 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
             break;
         }
 
-    } while ( token.first != EToken::eof && token.first != EToken::error );
+    } while ( token.first != EToken::eof && token.first != EToken::error && token.first != EToken::kv_return );
 
 
     for ( auto iter = outAST.begin(); iter != outAST.end(); iter++ )

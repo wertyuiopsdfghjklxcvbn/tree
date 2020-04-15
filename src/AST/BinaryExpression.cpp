@@ -39,6 +39,7 @@ llvm::Value* BinaryExpression::generate( llvm::Module& module, llvm::BasicBlock*
                     basicBlock->getInstList().push_back( loadInst );
                     lhs = loadInst;
                 }
+                //TODO diferent for fpn
                 llvm::Instruction* t = llvm::BinaryOperator::Create( llvm::Instruction::Add, lhs, rhs );
                 basicBlock->getInstList().push_back( t );
                 return t;

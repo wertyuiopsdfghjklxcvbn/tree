@@ -2,7 +2,6 @@
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 
 
@@ -46,7 +45,6 @@ llvm::Value* FunctionDefinition::generate( llvm::Module& module, llvm::BasicBloc
             bodyIt->get()->generate( module, functionBasicBlock );
             ++bodyIt;
         }
-        functionBasicBlock->getInstList().push_back( llvm::ReturnInst::Create( module.getContext() ) );
     }
     return function;
 }

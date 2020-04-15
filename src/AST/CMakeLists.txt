@@ -7,5 +7,6 @@ add_library(AST STATIC
     VariableCall.cpp
     FunctionCall.cpp
     FunctionDefinition.cpp
+    Return.cpp
 
 )
