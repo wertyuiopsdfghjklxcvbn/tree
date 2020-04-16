@@ -1,6 +1,8 @@
 #include "Return.hpp"
+#include "../Logging.hpp"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
+
 
 
 namespace ast
@@ -21,7 +23,7 @@ namespace ast
             }
             else
             {
-                //err
+                printError("return generation error");
                 return nullptr;
             }
         }

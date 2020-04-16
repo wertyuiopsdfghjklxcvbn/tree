@@ -2,6 +2,7 @@
 
 #include <list>
 #include <memory>
+
 #include "ast/Node.hpp"
 
 class IRGenerator

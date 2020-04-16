@@ -1,9 +1,11 @@
 #include "BinaryExpression.hpp"
+#include "../Logging.hpp"
 #include "../Operators.hpp"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
+
 
 
 namespace ast
@@ -23,7 +25,6 @@ namespace ast
         llvm::Value* rhs = mRightHandSide->generate( module, basicBlock );
         if ( lhs != nullptr && rhs != nullptr )
         {
-
             //TODO rewrite as enum
             if ( mOperation == "+" )
             {
@@ -42,9 +43,9 @@ namespace ast
                         lhs = loadInst;
                     }
                     //TODO diferent for fpn
-                    llvm::Instruction* t = llvm::BinaryOperator::Create( llvm::Instruction::Add, lhs, rhs );
-                    basicBlock->getInstList().push_back( t );
-                    return t;
+                    llvm::Instruction* instruction = llvm::BinaryOperator::Create( llvm::Instruction::Add, lhs, rhs );
+                    basicBlock->getInstList().push_back( instruction );
+                    return instruction;
                 }
                 else
                 {
@@ -87,12 +88,13 @@ namespace ast
             }
             else
             {
+                printError( "unknown operator" );
                 return nullptr;
             }
         }
         else
         {
-            //err
+            printError( "invalid binary operator parametr" );
             return nullptr;
         }
     }

@@ -1,16 +1,18 @@
-#include "IRGenerator.hpp"
-#include <iostream>
 #include <memory>
+
+#include "IRGenerator.hpp"
 #include "Logging.hpp"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/Function.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Support/raw_ostream.h"
 
 
 
-IRGenerator::IRGenerator( std::list<std::unique_ptr<ast::Node>>& parsedAST, const std::string& moduleName ): mParsedAST( parsedAST ), mModuleName( moduleName ) {}
+IRGenerator::IRGenerator( std::list<std::unique_ptr<ast::Node>>& parsedAST, const std::string& moduleName ): mParsedAST( parsedAST ), mModuleName( moduleName )
+{
+}
 
 bool IRGenerator::generate()
 {
@@ -24,9 +26,13 @@ bool IRGenerator::generate()
 
     for ( std::list<std::unique_ptr<ast::Node>>::iterator iter = mParsedAST.begin(); iter != mParsedAST.end(); iter++ )
     {
-        llvm::Value* t = iter->get()->generate( *module, nullptr );
-
         printError( iter->get()->show() );
+        llvm::Value* t = iter->get()->generate( *module, nullptr );
+        if ( t == nullptr )
+        {
+            printError( "ast generating error", "\n\n" );
+            break;
+        }
     }
 
 

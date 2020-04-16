@@ -1,12 +1,13 @@
 #include <string>
 
+#include "../Logging.hpp"
 #include "FunctionCall.hpp"
 #include "llvm/IR/Argument.h"
+#include "llvm/IR/Attributes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Value.h"
-#include "llvm/IR/ValueSymbolTable.h"
-#include "llvm/Support/raw_ostream.h"
+
 
 
 namespace ast
@@ -27,9 +28,8 @@ namespace ast
                 llvm::Value* value = i->generate( module, basicBlock );
                 if ( value != nullptr )
                 {
-                    if ( !( value->getType()->isPointerTy() ) )
+                    if ( !value->getType()->isPointerTy() )
                     {
-                        //TODO check constant
                         const llvm::DataLayout& dataLayout = basicBlock->getParent()->getParent()->getDataLayout();
                         llvm::AllocaInst* allocaInst = new llvm::AllocaInst( value->getType(), dataLayout.getAllocaAddrSpace(), "tempLiteralPointer" );
                         basicBlock->getInstList().push_back( allocaInst );
@@ -41,15 +41,24 @@ namespace ast
                 }
                 else
                 {
+                    printError( "can't generate argument" );
                     return nullptr;
                 }
             }
-
-            llvm::CallInst* callInst = llvm::CallInst::Create( llvm::FunctionCallee( function ), args, "functionCallResult", basicBlock );
-            return callInst;
+            if ( args.size() == function->arg_size() )
+            {
+                llvm::CallInst* callInst = llvm::CallInst::Create( llvm::FunctionCallee( function ), args, "functionCallResult", basicBlock );
+                return callInst;
+            }
+            else
+            {
+                printError( "arg size mismatch" );
+                return nullptr;
+            }
         }
         else
         {
+            printError( "can't find function" );
             return nullptr;
         }
     }

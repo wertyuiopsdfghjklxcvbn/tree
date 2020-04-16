@@ -4,7 +4,7 @@
 
 
 
-void printError( const std::string& errorMessage, const char& end )
+void printError( const std::string& errorMessage, const std::string& end )
 {
     std::cout << errorMessage << end;
 }

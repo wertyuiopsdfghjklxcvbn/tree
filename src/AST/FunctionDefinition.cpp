@@ -1,8 +1,10 @@
 #include "FunctionDefinition.hpp"
+#include "../Logging.hpp"
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
+
 
 
 namespace ast
@@ -46,7 +48,12 @@ namespace ast
             std::list<std::unique_ptr<Node>>::const_iterator bodyIt = mBody.begin();
             while ( bodyIt != mBody.end() )
             {
-                bodyIt->get()->generate( module, functionBasicBlock );
+                if ( bodyIt->get()->generate( module, functionBasicBlock ) == nullptr )
+                {
+                    printError( "function body generation error" );
+                    return nullptr;
+                }
+
                 ++bodyIt;
             }
         }

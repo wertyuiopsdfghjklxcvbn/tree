@@ -1,8 +1,10 @@
 #include "VariableCall.hpp"
+#include "../Logging.hpp"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueSymbolTable.h"
+
 
 
 namespace ast
@@ -45,7 +47,7 @@ namespace ast
         }
         else
         {
-            //err
+            printError( "variable wasn't found" );
             return nullptr;
         }
     }
