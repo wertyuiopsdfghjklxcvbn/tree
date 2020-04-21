@@ -9,5 +9,5 @@ add_executable(tree
     IRGenerator.cpp
 )
 
-target_link_libraries(tree AST)
+target_link_libraries(tree ast)
 

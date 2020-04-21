@@ -8,12 +8,12 @@
 #include "Operators.hpp"
 #include "Parser.hpp"
 #include "ast/BinaryExpression.hpp"
+#include "ast/Boolean.hpp"
 #include "ast/FunctionCall.hpp"
 #include "ast/FunctionDefinition.hpp"
 #include "ast/Number.hpp"
 #include "ast/Return.hpp"
 #include "ast/VariableCall.hpp"
-
 
 
 
@@ -292,6 +292,19 @@ std::unique_ptr<ast::Node> Parser::tokenToNode( const TokenType& token ) const
             returnNode = std::make_unique<ast::VariableDeclaration>( tokenToVariableDeclaration( token ) );
             break;
         }
+        case EToken::boolean_literal:
+        {
+
+            if ( token.second == "true" )
+            {
+                returnNode = std::make_unique<ast::Boolean>( true );
+            }
+            else
+            {
+                returnNode = std::make_unique<ast::Boolean>( false );
+            }
+            break;
+        }
         default:
         {
             printError( "error converting token " + tokenToString( token.first ) + " " + token.second );
@@ -314,8 +327,6 @@ bool Parser::isOperable( const EToken& token ) const
         case EToken::closing_round_bracket:
         case EToken::binary_operator:
         case EToken::boolean_literal:
-        case EToken::kv_true:
-        case EToken::kv_false:
         case EToken::name:
         case EToken::call:
         case EToken::comma:

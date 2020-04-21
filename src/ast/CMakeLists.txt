@@ -1,4 +1,4 @@
-add_library(AST STATIC
+add_library(ast STATIC
     BinaryExpression.cpp
     Boolean.cpp
     Number.cpp

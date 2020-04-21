@@ -32,7 +32,7 @@ namespace ast
             returnInst = llvm::ReturnInst::Create( module.getContext() );
         }
         basicBlock->getInstList().push_back( returnInst );
-        return nullptr;
+        return returnInst;
     }
 
 

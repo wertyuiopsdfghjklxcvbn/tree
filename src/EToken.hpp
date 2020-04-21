@@ -29,8 +29,8 @@ enum class EToken
     function_definition,
     comma,
     indent,
-    kv_true,
-    kv_false,
+    //kv_true,
+    //kv_false,
     error
 };
 

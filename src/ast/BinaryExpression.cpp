@@ -68,7 +68,7 @@ namespace ast
                         storeInst = new llvm::StoreInst( rhs, lhs );
                     }
                     basicBlock->getInstList().push_back( storeInst );
-                    return nullptr;
+                    return storeInst;
                 }
                 else
                 {
@@ -76,7 +76,8 @@ namespace ast
                     if ( foundValue )
                     {
                         //init global var
-                        //llvm::Constant * constant = llvm::ConstantInt::get( llvm::Type::getInt32Ty( module.getContext() ), 5 );
+                        //rhs->getType();
+                        //llvm::Constant* constant = llvm::ConstantInt::get( llvm::Type::getInt32Ty( module.getContext() ), 5 );
                         //foundValue->setInitializer( constant );
                     }
                     else
