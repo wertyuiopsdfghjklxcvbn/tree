@@ -14,7 +14,7 @@ namespace ast
     public:
         Boolean( const bool& value );
         virtual const std::string show() const override;
-        virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
+        virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock*& basicBlock, ValueSymbolTable* parentAvailableVariables ) const override;
     };
 
 } // namespace ast

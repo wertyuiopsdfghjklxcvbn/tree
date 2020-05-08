@@ -17,7 +17,7 @@ namespace ast
     FunctionCall::FunctionCall( const std::string& name, std::list<std::unique_ptr<Node>>& arguments ): mName( name ), mArguments( std::move( arguments ) ) {}
 
 
-    llvm::Value* FunctionCall::generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const
+    llvm::Value* FunctionCall::generate( llvm::Module& module, llvm::BasicBlock*& basicBlock, ValueSymbolTable* parentAvailableVariables ) const
     {
         llvm::Function* function = module.getFunction( mName );
         if ( function != nullptr )
@@ -25,7 +25,7 @@ namespace ast
             std::vector<llvm::Value*> args;
             for ( const auto& i : mArguments )
             {
-                llvm::Value* value = i->generate( module, basicBlock );
+                llvm::Value* value = i->generate( module, basicBlock, parentAvailableVariables );
                 if ( value != nullptr )
                 {
                     if ( !value->getType()->isPointerTy() )

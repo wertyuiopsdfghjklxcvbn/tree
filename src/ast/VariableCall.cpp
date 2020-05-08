@@ -13,10 +13,27 @@ namespace ast
     VariableCall::VariableCall( const std::string& name ): mName( name ) {}
 
 
-    llvm::Value* VariableCall::generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const
+    llvm::Value* VariableCall::generate( llvm::Module& module, llvm::BasicBlock*& basicBlock, ValueSymbolTable* parentAvailableVariables ) const
     {
         if ( basicBlock != nullptr )
         {
+            llvm::ValueSymbolTable* variables = basicBlock->getValueSymbolTable();
+            if ( variables != nullptr )
+            {
+                llvm::Value* foundValue = variables->lookup( mName );
+                if ( foundValue != nullptr )
+                {
+                    return foundValue;
+                }
+            }
+            if ( parentAvailableVariables != nullptr )
+            {
+                ValueSymbolTable::iterator foundValue = parentAvailableVariables->find( mName );
+                if ( foundValue != parentAvailableVariables->end() )
+                {
+                    return foundValue->second;
+                }
+            }
             llvm::Function* function = basicBlock->getParent();
             if ( function != nullptr )
             {
@@ -30,15 +47,6 @@ namespace ast
                     ++functionIt;
                 }
             }
-            llvm::ValueSymbolTable* valueSymbolTable = basicBlock->getValueSymbolTable();
-            if ( valueSymbolTable != nullptr )
-            {
-                llvm::Value* foundValue = valueSymbolTable->lookup( mName );
-                if ( foundValue != nullptr )
-                {
-                    return foundValue;
-                }
-            }
         }
         llvm::GlobalValue* foundValue = module.getNamedValue( mName );
         if ( foundValue )
@@ -47,7 +55,7 @@ namespace ast
         }
         else
         {
-            printError( "variable wasn't found" );
+            printError( "variable '" + mName + "' wasn't found" );
             return nullptr;
         }
     }

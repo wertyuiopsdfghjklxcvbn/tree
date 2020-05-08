@@ -17,7 +17,7 @@ namespace ast
 
     public:
         FunctionCall( const std::string& name, std::list<std::unique_ptr<Node>>& arguments );
-        virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
+        virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock*& basicBlock, ValueSymbolTable* parentAvailableVariables ) const override;
         virtual const std::string show() const override;
     };
 

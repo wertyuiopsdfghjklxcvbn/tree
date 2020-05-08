@@ -111,7 +111,7 @@ std::string tokenToString( const EToken& token )
             returnValue = "indent";
             break;
         }
-        /*case EToken::kv_true:
+            /*case EToken::kv_true:
         {
             returnValue = "kv_true";
             break;
@@ -121,6 +121,21 @@ std::string tokenToString( const EToken& token )
             returnValue = "kv_false";
             break;
         }*/
+        case EToken::kv_if:
+        {
+            returnValue = "kv_if";
+            break;
+        }
+        case EToken::kv_elif:
+        {
+            returnValue = "kv_elif";
+            break;
+        }
+        case EToken::kv_else:
+        {
+            returnValue = "kv_else";
+            break;
+        }
         case EToken::error:
         {
             returnValue = "error";

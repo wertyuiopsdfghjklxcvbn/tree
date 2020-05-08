@@ -31,6 +31,9 @@ enum class EToken
     indent,
     //kv_true,
     //kv_false,
+    kv_if,
+    kv_elif,
+    kv_else,
     error
 };
 

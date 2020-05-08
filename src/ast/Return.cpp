@@ -11,19 +11,19 @@ namespace ast
     Return::Return( std::unique_ptr<Node> returnValue ): mReturnValue( std::move( returnValue ) ) {}
 
 
-    llvm::Value* Return::generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const
+    llvm::Value* Return::generate( llvm::Module& module, llvm::BasicBlock*& basicBlock, ValueSymbolTable* parentAvailableVariables ) const
     {
         llvm::ReturnInst* returnInst;
         if ( mReturnValue )
         {
-            llvm::Value* value = mReturnValue->generate( module, basicBlock );
+            llvm::Value* value = mReturnValue->generate( module, basicBlock, parentAvailableVariables );
             if ( value != nullptr )
             {
                 returnInst = llvm::ReturnInst::Create( module.getContext(), value );
             }
             else
             {
-                printError("return generation error");
+                printError( "return generation error" );
                 return nullptr;
             }
         }

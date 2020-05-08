@@ -24,10 +24,11 @@ bool IRGenerator::generate()
     //llvm::Function* F = llvm::Function::Create( FT, llvm::Function::ExternalLinkage, "main", *module );
     //llvm::BasicBlock* BB = llvm::BasicBlock::Create( context, "EntryBlock", F );
 
+    llvm::BasicBlock* initialBasicBasicBlock = nullptr;
     for ( std::list<std::unique_ptr<ast::Node>>::iterator iter = mParsedAST.begin(); iter != mParsedAST.end(); iter++ )
     {
         printError( iter->get()->show() );
-        llvm::Value* t = iter->get()->generate( *module, nullptr );
+        llvm::Value* t = iter->get()->generate( *module, initialBasicBasicBlock, nullptr );
         if ( t == nullptr )
         {
             printError( "ast generating error", "\n\n" );

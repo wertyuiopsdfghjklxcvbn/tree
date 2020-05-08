@@ -17,7 +17,7 @@ namespace ast
     }
 
 
-    llvm::Value* Boolean::generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const
+    llvm::Value* Boolean::generate( llvm::Module& module, llvm::BasicBlock*& basicBlock, ValueSymbolTable* parentAvailableVariables ) const
     {
         if ( mValue )
         {

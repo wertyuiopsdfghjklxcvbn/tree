@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cctype>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "KeyWords.hpp"
@@ -9,6 +10,7 @@
 #include "Parser.hpp"
 #include "ast/BinaryExpression.hpp"
 #include "ast/Boolean.hpp"
+#include "ast/ConditionalStatementIf.hpp"
 #include "ast/FunctionCall.hpp"
 #include "ast/FunctionDefinition.hpp"
 #include "ast/Number.hpp"
@@ -17,7 +19,7 @@
 
 
 
-Parser::Parser( std::stringstream& fileBuffer ): mFileBuffer( fileBuffer ), mIndent( 0 ) {}
+Parser::Parser( std::stringstream& fileBuffer ): mFileBuffer( fileBuffer ), mIndent( 0 ), mNextTokens(), mPreviousToken() {}
 
 
 std::string Parser::parseName()
@@ -122,7 +124,7 @@ TokenType Parser::getNextToken()
                     }
                     else
                     {
-                        mPreviousToken = returnToken;
+                        mPreviousToken = { EToken::name, name };
                         TokenType nextToken = getNextToken();
                         switch ( nextToken.first )
                         {
@@ -153,25 +155,33 @@ TokenType Parser::getNextToken()
                 }
                 else if ( nextCharacter == ' ' )
                 {
-                    if ( mPreviousToken.first == EToken::eol )
+                    //printError( tokenToString( mPreviousToken.first ) + " " + mPreviousToken.second );
+                    if ( mPreviousToken != std::nullopt )
                     {
-                        std::string whiteSpaces;
-                        nextCharacter = mFileBuffer.get();
-                        while ( nextCharacter == ' ' )
+                        if ( mPreviousToken->first == EToken::eol )
                         {
-                            whiteSpaces += nextCharacter;
+                            std::string whiteSpaces;
                             nextCharacter = mFileBuffer.get();
+                            while ( nextCharacter == ' ' )
+                            {
+                                whiteSpaces += nextCharacter;
+                                nextCharacter = mFileBuffer.get();
+                            }
+                            if ( !mFileBuffer.eof() )
+                            {
+                                mFileBuffer.unget();
+                            }
+                            returnToken = { EToken::indent, whiteSpaces };
                         }
-                        if ( !mFileBuffer.eof() )
+                        else
                         {
-                            mFileBuffer.unget();
+                            mFileBuffer.get();
+                            returnToken = getNextToken();
                         }
-                        returnToken = { EToken::indent, whiteSpaces };
                     }
                     else
                     {
-                        mFileBuffer.get();
-                        returnToken = getNextToken();
+                        printError( "mPreviousToken equal nullopt" );
                     }
                 }
                 else if ( nextCharacter == ',' )
@@ -245,7 +255,23 @@ TokenType Parser::getNextToken()
         returnToken = returnValue;
     }
     mPreviousToken = returnToken;
+    //printError( tokenToString( returnToken.first ) + " " + returnToken.second );
     return returnToken;
+}
+
+
+void Parser::unget()
+{
+    if ( mPreviousToken != std::nullopt )
+    {
+        printError( tokenToString( mPreviousToken->first ) + " " + mPreviousToken->second );
+        mNextTokens.push( mPreviousToken.value() );
+        mPreviousToken.reset();
+    }
+    else
+    {
+        printError( "warning: empty mPreviousToken" );
+    }
 }
 
 
@@ -253,7 +279,16 @@ TokenType Parser::peekNextToken()
 {
     if ( mNextTokens.empty() )
     {
-        mNextTokens.push( getNextToken() );
+        if ( mPreviousToken != std::nullopt )
+        {
+            TokenType token = mPreviousToken.value();
+            mNextTokens.push( getNextToken() );
+            mPreviousToken = token;
+        }
+        else
+        {
+            mNextTokens.push( getNextToken() );
+        }
     }
     return mNextTokens.top();
 }
@@ -560,7 +595,7 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
     do
     {
         token = peekNextToken();
-        printError( "parse block: " + tokenToString( token.first ) + " " + token.second );
+        printError( "parse block " + std::to_string( parentBlockIndent ) + ": " + tokenToString( token.first ) + " " + token.second );
 
         if ( token.first == EToken::indent )
         {
@@ -568,6 +603,14 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
             {
                 isFirstMeaningfulLine = false;
             }
+
+            if ( token.second.length() < blockIndent )
+            {
+                //exit from cycle or basic block
+                printError( "exit block body" );
+                break;
+            }
+
             getNextToken();
             if ( mIndent == 0 )
             {
@@ -576,10 +619,10 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
                 printError( "file indent: " + std::to_string( mIndent ) );
             }
 
-            if ( blockIndent == token.second.length() )
+            if ( token.second.length() == blockIndent )
             {
                 token = peekNextToken();
-                printError( "parse block: " + tokenToString( token.first ) + " " + token.second );
+                printError( "parse block " + std::to_string( parentBlockIndent ) + ": " + tokenToString( token.first ) + " " + token.second );
                 if ( isOperable( token.first ) )
                 {
                     node = parseBinaryExpression();
@@ -609,6 +652,109 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
                             else
                             {
                                 node = nullptr;
+                            }
+                            break;
+                        }
+                        case EToken::kv_if:
+                        {
+                            getNextToken();
+
+                            std::list<ast::BlockIf> blockIfList;
+                            std::list<std::unique_ptr<ast::Node>> elseBlock;
+
+                            std::unique_ptr<ast::Node> ifExpression = parseBinaryExpression();
+                            if ( ifExpression )
+                            {
+                                std::list<std::unique_ptr<ast::Node>> blockAST;
+                                if ( parseBlock( blockIndent, blockAST ) )
+                                {
+                                    blockIfList.push_back( { std::move( ifExpression ), std::move( blockAST ) } );
+                                }
+                                else
+                                {
+                                    printError( "error parsing block if" );
+                                    isParsed = false;
+                                    node = nullptr;
+                                    break;
+                                }
+
+                                TokenType nextToken = peekNextToken();
+                                while ( nextToken.first == EToken::indent && nextToken.second.length() == blockIndent )
+                                {
+                                    getNextToken();
+
+                                    nextToken = peekNextToken();
+
+                                    if ( nextToken.first == EToken::kv_elif )
+                                    {
+                                        getNextToken();
+                                        std::unique_ptr<ast::Node> elIfExpression = parseBinaryExpression();
+                                        if ( elIfExpression )
+                                        {
+                                            std::list<std::unique_ptr<ast::Node>> blockAST;
+                                            if ( parseBlock( blockIndent, blockAST ) )
+                                            {
+                                                blockIfList.push_back( { std::move( elIfExpression ), std::move( blockAST ) } );
+                                            }
+                                            else
+                                            {
+                                                printError( "error parsing block elif" );
+                                                isParsed = false;
+                                                node = nullptr;
+                                                break;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            printError( "error parsing elif expr" );
+                                            isParsed = false;
+                                            node = nullptr;
+                                            break;
+                                        }
+                                    }
+                                    else if ( nextToken.first == EToken::kv_else )
+                                    {
+                                        getNextToken();
+                                        if ( getNextToken().first == EToken::eol )
+                                        {
+
+                                            if ( parseBlock( blockIndent, elseBlock ) )
+                                            {
+                                                break;
+                                            }
+                                            else
+                                            {
+                                                printError( "error parsing block else" );
+                                                isParsed = false;
+                                                node = nullptr;
+                                                break;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            printError( "expected eol" );
+                                            isParsed = false;
+                                            node = nullptr;
+                                            break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        unget();
+                                        break;
+                                    }
+                                    printError( tokenToString( peekNextToken().first ) + " " + peekNextToken().second );
+                                    nextToken = peekNextToken();
+                                }
+                                printError( tokenToString( peekNextToken().first ) + " " + peekNextToken().second );
+                                node = std::make_unique<ast::ConditionalStatementIf>( blockIfList, elseBlock );
+                            }
+                            else
+                            {
+                                printError( "error parsing if expr" );
+                                isParsed = false;
+                                node = nullptr;
+                                break;
                             }
                             break;
                         }
@@ -652,6 +798,7 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
                         {
                             getNextToken();
                             printError( "unhandled token: " + tokenToString( token.first ) + " " + token.second );
+                            isParsed = false;
                             break;
                         }
                     }
@@ -823,7 +970,7 @@ bool Parser::parseFile( std::list<std::unique_ptr<ast::Node>>& parsedAST )
                 default:
                 {
                     getNextToken();
-                    printError( "unhandled token: " + tokenToString( token.first ) + " " + token.second );
+                    printError( "parse file unhandled token: " + tokenToString( token.first ) + " " + token.second );
                     isParsed = false;
                     break;
                 }

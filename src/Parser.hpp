@@ -25,14 +25,15 @@ private:
     size_t mIndent;
     //std::list<std::unique_ptr<Node>> mParsedAST;
     std::stack<TokenType> mNextTokens;
-    TokenType mPreviousToken;
-    //    void parseTopLevel();
+    
+    std::optional<TokenType> mPreviousToken;
 
 
     std::string parseName();
     std::string parseOperation();
     TokenType parseNumber();
     TokenType getNextToken();
+    void unget();
     TokenType peekNextToken();
 
     ast::VariableDeclaration tokenToVariableDeclaration( const TokenType& token ) const;

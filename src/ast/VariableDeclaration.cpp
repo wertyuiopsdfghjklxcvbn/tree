@@ -17,7 +17,7 @@ namespace ast
     }
 
 
-    llvm::Value* VariableDeclaration::generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const
+    llvm::Value* VariableDeclaration::generate( llvm::Module& module, llvm::BasicBlock*& basicBlock, ValueSymbolTable* parentAvailableVariables ) const
     {
         if ( basicBlock != nullptr )
         {

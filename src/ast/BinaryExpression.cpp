@@ -19,10 +19,10 @@ namespace ast
     }
 
 
-    llvm::Value* BinaryExpression::generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const
+    llvm::Value* BinaryExpression::generate( llvm::Module& module, llvm::BasicBlock*& basicBlock, ValueSymbolTable* parentAvailableVariables ) const
     {
-        llvm::Value* lhs = mLeftHandSide->generate( module, basicBlock );
-        llvm::Value* rhs = mRightHandSide->generate( module, basicBlock );
+        llvm::Value* lhs = mLeftHandSide->generate( module, basicBlock, parentAvailableVariables );
+        llvm::Value* rhs = mRightHandSide->generate( module, basicBlock, parentAvailableVariables );
         if ( lhs != nullptr && rhs != nullptr )
         {
             //TODO rewrite as enum

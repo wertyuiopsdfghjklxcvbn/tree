@@ -8,5 +8,5 @@ add_library(ast STATIC
     FunctionCall.cpp
     FunctionDefinition.cpp
     Return.cpp
-
+    ConditionalStatementIf.cpp
 )

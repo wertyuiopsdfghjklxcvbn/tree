@@ -9,7 +9,7 @@ namespace ast
     Number::Number( const std::string& number, const bool& fpn ): mNumber( number ), mIsFpn( fpn ) {}
 
 
-    llvm::Value* Number::generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const
+    llvm::Value* Number::generate( llvm::Module& module, llvm::BasicBlock*& basicBlock, ValueSymbolTable* parentAvailableVariables ) const
     {
         if ( mIsFpn )
         {

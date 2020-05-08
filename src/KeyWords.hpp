@@ -13,9 +13,17 @@ typedef std::map<std::string, EToken> KeyWordsType;
 class KeyWords
 {
 private:
-    const KeyWordsType mKeyWords = { { "import", EToken::kv_import },     { "return", EToken::kv_return },       { "constant", EToken::kv_constant },
-                                     { "class", EToken::kv_class },       { "structure", EToken::kv_structure }, { "interface", EToken::kv_interface },
-                                     { "true", EToken::boolean_literal }, { "false", EToken::boolean_literal } };
+    const KeyWordsType mKeyWords = { { "import", EToken::kv_import },
+                                     { "return", EToken::kv_return },
+                                     { "constant", EToken::kv_constant },
+                                     { "class", EToken::kv_class },
+                                     { "structure", EToken::kv_structure },
+                                     { "interface", EToken::kv_interface },
+                                     { "true", EToken::boolean_literal },
+                                     { "false", EToken::boolean_literal },
+                                     { "if", EToken::kv_if },
+                                     { "elif", EToken::kv_elif },
+                                     { "else", EToken::kv_else } };
 
 public:
     bool isKeyWord( const std::string& keyWord ) const;

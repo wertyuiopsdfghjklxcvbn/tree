@@ -21,7 +21,7 @@ namespace ast
     }
 
 
-    llvm::Value* FunctionDefinition::generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const
+    llvm::Value* FunctionDefinition::generate( llvm::Module& module, llvm::BasicBlock*& basicBlock, ValueSymbolTable* parentAvailableVariables ) const
     {
         //TODO mReturnType.getType
         std::vector<llvm::Type*> args;
@@ -48,12 +48,11 @@ namespace ast
             std::list<std::unique_ptr<Node>>::const_iterator bodyIt = mBody.begin();
             while ( bodyIt != mBody.end() )
             {
-                if ( bodyIt->get()->generate( module, functionBasicBlock ) == nullptr )
+                if ( bodyIt->get()->generate( module, functionBasicBlock, parentAvailableVariables ) == nullptr )
                 {
                     printError( "function body generation error" );
                     return nullptr;
                 }
-
                 ++bodyIt;
             }
         }

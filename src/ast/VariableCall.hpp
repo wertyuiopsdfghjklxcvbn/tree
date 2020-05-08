@@ -14,7 +14,7 @@ namespace ast
 
     public:
         VariableCall( const std::string& name );
-        virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock* basicBlock ) const override;
+        virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock*& basicBlock, ValueSymbolTable* parentAvailableVariables ) const override;
         virtual const std::string show() const override;
     };
 
