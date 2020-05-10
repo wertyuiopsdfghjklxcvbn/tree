@@ -6,7 +6,7 @@
 #include "ConditionalStatementIf.hpp"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
-
+#include "llvm/IR/ValueSymbolTable.h"
 
 namespace ast
 {
