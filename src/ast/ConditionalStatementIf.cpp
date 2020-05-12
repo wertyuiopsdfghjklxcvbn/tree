@@ -11,7 +11,7 @@
 namespace ast
 {
 
-    ConditionalStatementIf::ConditionalStatementIf( std::list<BlockIf>& listOfStatementsIf, std::list<std::unique_ptr<Node>>& elseBody ):
+    ConditionalStatementIf::ConditionalStatementIf( std::list<BlockIf>& listOfStatementsIf, std::unique_ptr<CodeBlock>&& elseBody ):
         mListOfStatementsIf( std::move( listOfStatementsIf ) ),
         mElseBody( std::move( elseBody ) )
     {
@@ -43,13 +43,10 @@ namespace ast
             if ( condition != nullptr )
             {
                 ifBlock = llvm::BasicBlock::Create( module.getContext(), "if", statementBasicBlock->getParent() );
-                for ( const std::unique_ptr<Node>& lineOfCode : statementsIfIterator->second )
+                if ( statementsIfIterator->second->generate( module, ifBlock, &valueSymbolTable ) == nullptr )
                 {
-                    if ( lineOfCode->generate( module, ifBlock, &valueSymbolTable ) == nullptr )
-                    {
-                        printError( "error generating if block" );
-                        return nullptr;
-                    }
+                    printError( "error generating if block" );
+                    return nullptr;
                 }
             }
             ifBlock->getInstList().push_back( llvm::BranchInst::Create( mergeBasicBlock ) );
@@ -62,13 +59,10 @@ namespace ast
             else
             {
                 elseBlock = llvm::BasicBlock::Create( module.getContext(), "else", basicBlock->getParent() );
-                for ( const std::unique_ptr<Node>& lineOfCode : mElseBody )
+                if ( mElseBody->generate( module, elseBlock, &valueSymbolTable ) == nullptr )
                 {
-                    if ( lineOfCode->generate( module, elseBlock, &valueSymbolTable ) == nullptr )
-                    {
-                        printError( "error generating else block" );
-                        return nullptr;
-                    }
+                    printError( "error generating else block" );
+                    return nullptr;
                 }
                 elseBlock->getInstList().push_back( llvm::BranchInst::Create( mergeBasicBlock ) );
             }
@@ -89,12 +83,9 @@ namespace ast
         std::string returnValue;
         for ( auto& i : mListOfStatementsIf )
         {
-            returnValue += "if " + i.first->show() + " " + std::to_string( i.second.size() ) + " ";
+            returnValue += "if " + i.first->show() + " " + i.second->show() + " ";
         }
-        if ( !mElseBody.empty() )
-        {
-            returnValue += "else " + std::to_string( mElseBody.size() );
-        }
+        returnValue += "else " + mElseBody->show();
         return returnValue;
     }
 

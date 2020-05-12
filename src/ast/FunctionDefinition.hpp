@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include "CodeBlock.hpp"
 #include "Node.hpp"
 #include "VariableDeclaration.hpp"
 
@@ -16,10 +17,10 @@ namespace ast
     private:
         VariableDeclaration mReturnType;
         std::list<VariableDeclaration> mArguments;
-        std::list<std::unique_ptr<Node>> mBody;
+        std::unique_ptr<CodeBlock> mBody;
 
     public:
-        FunctionDefinition( const VariableDeclaration& returnType, const std::list<VariableDeclaration>& arguments, std::list<std::unique_ptr<Node>>& body );
+        FunctionDefinition( const VariableDeclaration& returnType, const std::list<VariableDeclaration>& arguments, std::unique_ptr<CodeBlock>&& body );
         virtual llvm::Value* generate( llvm::Module& module, llvm::BasicBlock*& basicBlock, ValueSymbolTable* parentAvailableVariables ) const override;
         virtual const std::string show() const override;
     };

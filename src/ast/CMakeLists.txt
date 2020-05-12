@@ -9,4 +9,5 @@ add_library(ast STATIC
     FunctionDefinition.cpp
     Return.cpp
     ConditionalStatementIf.cpp
+    CodeBlock.cpp
 )

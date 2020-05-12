@@ -10,7 +10,9 @@
 
 
 
-IRGenerator::IRGenerator( std::list<std::unique_ptr<ast::Node>>& parsedAST, const std::string& moduleName ): mParsedAST( parsedAST ), mModuleName( moduleName )
+IRGenerator::IRGenerator( std::unique_ptr<ast::CodeBlock>& parsedAST, const std::string& moduleName ):
+    mParsedAST( std::move( parsedAST ) ),
+    mModuleName( moduleName )
 {
 }
 
@@ -25,20 +27,12 @@ bool IRGenerator::generate()
     //llvm::BasicBlock* BB = llvm::BasicBlock::Create( context, "EntryBlock", F );
 
     llvm::BasicBlock* initialBasicBasicBlock = nullptr;
-    for ( std::list<std::unique_ptr<ast::Node>>::iterator iter = mParsedAST.begin(); iter != mParsedAST.end(); iter++ )
+    if ( mParsedAST->generate( *module, initialBasicBasicBlock, nullptr ) == nullptr )
     {
-        printError( iter->get()->show() );
-        llvm::Value* t = iter->get()->generate( *module, initialBasicBasicBlock, nullptr );
-        if ( t == nullptr )
-        {
-            printError( "ast generating error", "\n\n" );
-            break;
-        }
+        printError( "ast generating error", "\n\n" );
     }
 
-
     module->print( llvm::errs(), nullptr );
-
 
     return true;
 }

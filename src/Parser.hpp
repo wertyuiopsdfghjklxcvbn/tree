@@ -9,11 +9,9 @@
 #include "EToken.hpp"
 #include "ast/Node.hpp"
 #include "ast/VariableDeclaration.hpp"
+#include "ast/CodeBlock.hpp"
 
 
-//"," //"("
-//const std::list<const char*> keyWords = { "import", "return", "constant", "class", "structure", "interface", "true", "false", "using" };
-//const std::list<const char*> embededTypes = {"Integer", "FPN", "String"};
 
 typedef std::pair<EToken, std::string> TokenType;
 
@@ -45,12 +43,12 @@ private:
     bool popOperatorStack( std::stack<TokenType>& operatorStack, std::stack<int>& argsCounters, std::list<std::unique_ptr<ast::Node>>& outNodes ) const;
     std::unique_ptr<ast::Node> parseBinaryExpression( std::unique_ptr<ast::Node> leftHandSide = nullptr );
 
-    bool parseBlock( const size_t& currentBlockIndent, std::list<std::unique_ptr<ast::Node>>& outAST ); //specify function or cycle or basic
+    bool parseBlock( const size_t& currentBlockIndent, std::unique_ptr<ast::CodeBlock>& codeBlock ); //specify function or cycle or basic
     std::unique_ptr<ast::Node> getFunctionDefinition();
 
 
 public:
     Parser( std::stringstream& fileBuffer );
 
-    bool parseFile( std::list<std::unique_ptr<ast::Node>>& parsedAST );
+    bool parseFile( std::unique_ptr<ast::CodeBlock>& codeBlock );
 };

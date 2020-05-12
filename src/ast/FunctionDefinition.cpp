@@ -13,7 +13,7 @@ namespace ast
 
     FunctionDefinition::FunctionDefinition( const VariableDeclaration& returnType,
                                             const std::list<VariableDeclaration>& arguments,
-                                            std::list<std::unique_ptr<Node>>& body ):
+                                            std::unique_ptr<CodeBlock>&& body ):
         mReturnType( returnType ),
         mArguments( arguments ),
         mBody( std::move( body ) )
@@ -42,19 +42,12 @@ namespace ast
             ++it;
             ++functionIt;
         }
-        if ( !mBody.empty() )
+
+        llvm::BasicBlock* functionBasicBlock = llvm::BasicBlock::Create( module.getContext(), "EntryBlock", function );
+        if ( mBody->generate( module, functionBasicBlock, parentAvailableVariables ) == nullptr )
         {
-            llvm::BasicBlock* functionBasicBlock = llvm::BasicBlock::Create( module.getContext(), "EntryBlock", function );
-            std::list<std::unique_ptr<Node>>::const_iterator bodyIt = mBody.begin();
-            while ( bodyIt != mBody.end() )
-            {
-                if ( bodyIt->get()->generate( module, functionBasicBlock, parentAvailableVariables ) == nullptr )
-                {
-                    printError( "function body generation error" );
-                    return nullptr;
-                }
-                ++bodyIt;
-            }
+            printError( "function body generation error" );
+            return nullptr;
         }
         return function;
     }
@@ -67,7 +60,7 @@ namespace ast
         {
             s += i.show() + " ";
         }
-        return "FunctionDefinition: " + mReturnType.show() + " " + std::to_string( mArguments.size() ) + s + " " + std::to_string( mBody.size() );
+        return "FunctionDefinition: " + mReturnType.show() + " " + std::to_string( mArguments.size() ) + s + " " + mBody->show();
     }
 
 } // namespace ast

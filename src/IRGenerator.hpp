@@ -3,15 +3,15 @@
 #include <list>
 #include <memory>
 
-#include "ast/Node.hpp"
+#include "ast/CodeBlock.hpp"
 
 class IRGenerator
 {
 private:
-    std::list<std::unique_ptr<ast::Node>>& mParsedAST;
+    std::unique_ptr<ast::CodeBlock> mParsedAST;
     const std::string mModuleName;
 
 public:
-    IRGenerator( std::list<std::unique_ptr<ast::Node>>& parsedAST, const std::string& moduleName );
+    IRGenerator( std::unique_ptr<ast::CodeBlock>& parsedAST, const std::string& moduleName );
     bool generate();
 };

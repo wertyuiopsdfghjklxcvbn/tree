@@ -585,8 +585,9 @@ std::unique_ptr<ast::Node> Parser::parseBinaryExpression( std::unique_ptr<ast::N
 
 
 
-bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_ptr<ast::Node>>& outAST )
+bool Parser::parseBlock( const size_t& parentBlockIndent, std::unique_ptr<ast::CodeBlock>& codeBlock )
 {
+    std::list<std::unique_ptr<ast::Node>> outAST;
     TokenType token;
     std::unique_ptr<ast::Node> node = nullptr;
     bool isParsed = true;
@@ -660,12 +661,12 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
                             getNextToken();
 
                             std::list<ast::BlockIf> blockIfList;
-                            std::list<std::unique_ptr<ast::Node>> elseBlock;
+                            std::unique_ptr<ast::CodeBlock> elseBlock;
 
                             std::unique_ptr<ast::Node> ifExpression = parseBinaryExpression();
                             if ( ifExpression )
                             {
-                                std::list<std::unique_ptr<ast::Node>> blockAST;
+                                std::unique_ptr<ast::CodeBlock> blockAST;
                                 if ( parseBlock( blockIndent, blockAST ) )
                                 {
                                     blockIfList.push_back( { std::move( ifExpression ), std::move( blockAST ) } );
@@ -691,7 +692,7 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
                                         std::unique_ptr<ast::Node> elIfExpression = parseBinaryExpression();
                                         if ( elIfExpression )
                                         {
-                                            std::list<std::unique_ptr<ast::Node>> blockAST;
+                                            std::unique_ptr<ast::CodeBlock> blockAST;
                                             if ( parseBlock( blockIndent, blockAST ) )
                                             {
                                                 blockIfList.push_back( { std::move( elIfExpression ), std::move( blockAST ) } );
@@ -717,7 +718,6 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
                                         getNextToken();
                                         if ( getNextToken().first == EToken::eol )
                                         {
-
                                             if ( parseBlock( blockIndent, elseBlock ) )
                                             {
                                                 break;
@@ -747,7 +747,11 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
                                     nextToken = peekNextToken();
                                 }
                                 printError( tokenToString( peekNextToken().first ) + " " + peekNextToken().second );
-                                node = std::make_unique<ast::ConditionalStatementIf>( blockIfList, elseBlock );
+                                if ( elseBlock == nullptr )
+                                {
+                                    elseBlock = std::make_unique<ast::CodeBlock>();
+                                }
+                                node = std::make_unique<ast::ConditionalStatementIf>( blockIfList, std::move( elseBlock ) );
                             }
                             else
                             {
@@ -841,10 +845,9 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::list<std::unique_
     } while ( token.first != EToken::eof && token.first != EToken::error && token.first != EToken::kv_return );
 
 
-    for ( auto iter = outAST.begin(); iter != outAST.end(); iter++ )
-    {
-        printError( iter->get()->show() );
-    }
+    codeBlock = std::make_unique<ast::CodeBlock>( outAST );
+    printError( codeBlock->show() );
+
     return isParsed;
 }
 
@@ -890,14 +893,20 @@ std::unique_ptr<ast::Node> Parser::getFunctionDefinition()
         nextToken = getNextToken();
         if ( nextToken.first == EToken::eol )
         {
-            std::list<std::unique_ptr<ast::Node>> body;
-            parseBlock( 0, body );
-            returnValue = std::make_unique<ast::FunctionDefinition>( functionReturnValue, arguments, body );
+            std::unique_ptr<ast::CodeBlock> body;
+            if ( parseBlock( 0, body ) )
+            {
+                returnValue = std::make_unique<ast::FunctionDefinition>( functionReturnValue, arguments, std::move( body ) );
+            }
+            else
+            {
+                printError( "error parsing function body" );
+                returnValue = nullptr;
+            }
         }
         else if ( nextToken.first == EToken::eof )
         {
-            std::list<std::unique_ptr<ast::Node>> body;
-            returnValue = std::make_unique<ast::FunctionDefinition>( functionReturnValue, arguments, body );
+            returnValue = std::make_unique<ast::FunctionDefinition>( functionReturnValue, arguments, std::make_unique<ast::CodeBlock>() );
         }
         else
         {
@@ -913,8 +922,9 @@ std::unique_ptr<ast::Node> Parser::getFunctionDefinition()
 }
 
 
-bool Parser::parseFile( std::list<std::unique_ptr<ast::Node>>& parsedAST )
+bool Parser::parseFile( std::unique_ptr<ast::CodeBlock>& codeBlock )
 {
+    std::list<std::unique_ptr<ast::Node>> parsedAST;
     bool isParsed = true;
     TokenType token;
     std::unique_ptr<ast::Node> node = nullptr;
@@ -979,7 +989,6 @@ bool Parser::parseFile( std::list<std::unique_ptr<ast::Node>>& parsedAST )
         if ( node )
         {
             parsedAST.push_back( std::move( node ) );
-            //mParsedAST.push_back( std::move( node ) );
         }
         else
         {
@@ -988,11 +997,8 @@ bool Parser::parseFile( std::list<std::unique_ptr<ast::Node>>& parsedAST )
 
     } while ( token.first != EToken::eof && token.first != EToken::error );
 
+    codeBlock = std::make_unique<ast::CodeBlock>( parsedAST );
 
-    //for ( auto iter = mParsedAST.begin(); iter != mParsedAST.end(); iter++ )
-    for ( auto iter = parsedAST.begin(); iter != parsedAST.end(); iter++ )
-    {
-        printError( iter->get()->show() );
-    }
+    printError( codeBlock->show() );
     return isParsed;
 }

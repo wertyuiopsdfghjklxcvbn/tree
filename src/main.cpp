@@ -118,7 +118,7 @@ int main( const int argc, const char* argv[] )
             std::stringstream fileBuffer;
             if ( readFileBuffer( rootFilePath, fileBuffer ) )
             {
-                std::list<std::unique_ptr<ast::Node>> parsedAST;
+                std::unique_ptr<ast::CodeBlock> parsedAST;
                 Parser parser( fileBuffer );
                 if ( parser.parseFile( parsedAST ) )
                 {

@@ -44,7 +44,7 @@ namespace ast
         }
         else
         {
-            return "Return";
+            return "Return\n";
         }
     }
 
