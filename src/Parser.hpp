@@ -2,37 +2,19 @@
 
 #include <list>
 #include <memory>
-#include <optional>
-#include <sstream>
-#include <stack>
 
-#include "EToken.hpp"
+#include "StreamParser.hpp"
 #include "ast/Node.hpp"
 #include "ast/VariableDeclaration.hpp"
 #include "ast/CodeBlock.hpp"
 
 
-
-typedef std::pair<EToken, std::string> TokenType;
-
-
 class Parser
 {
 private:
-    std::stringstream& mFileBuffer;
+    StreamParser mStreamParser;
     size_t mIndent;
-    //std::list<std::unique_ptr<Node>> mParsedAST;
-    std::stack<TokenType> mNextTokens;
-    
-    std::optional<TokenType> mPreviousToken;
 
-
-    std::string parseName();
-    std::string parseOperation();
-    TokenType parseNumber();
-    TokenType getNextToken();
-    void unget();
-    TokenType peekNextToken();
 
     ast::VariableDeclaration tokenToVariableDeclaration( const TokenType& token ) const;
     std::unique_ptr<ast::Node> tokenToNode( const TokenType& token ) const;

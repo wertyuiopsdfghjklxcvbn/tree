@@ -7,6 +7,7 @@ add_executable(tree
     Logging.cpp
     EToken.cpp
     IRGenerator.cpp
+    StreamParser.cpp
 )
 
 target_link_libraries(tree ast)
