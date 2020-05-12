@@ -25,6 +25,8 @@ private:
     bool popOperatorStack( std::stack<TokenType>& operatorStack, std::stack<int>& argsCounters, std::list<std::unique_ptr<ast::Node>>& outNodes ) const;
     std::unique_ptr<ast::Node> parseBinaryExpression( std::unique_ptr<ast::Node> leftHandSide = nullptr );
 
+    std::unique_ptr<ast::Node> parseKeyWordReturn();
+
     bool parseBlock( const size_t& currentBlockIndent, std::unique_ptr<ast::CodeBlock>& codeBlock ); //specify function or cycle or basic
     std::unique_ptr<ast::Node> getFunctionDefinition();
 
