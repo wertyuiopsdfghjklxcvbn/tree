@@ -23,7 +23,8 @@ private:
                                      { "false", EToken::boolean_literal },
                                      { "if", EToken::kv_if },
                                      { "elif", EToken::kv_elif },
-                                     { "else", EToken::kv_else } };
+                                     { "else", EToken::kv_else },
+                                     { "while", EToken::kv_while } };
 
 public:
     bool isKeyWord( const std::string& keyWord ) const;

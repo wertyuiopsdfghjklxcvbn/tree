@@ -45,15 +45,15 @@ std::string StreamParser::parseOperation()
 
 TokenType StreamParser::parseNumber()
 {
-    bool pointFounded = false;
+    bool pointIsFound = false;
     std::string number;
 
     unsigned char character = mFileBuffer.get();
     while ( std::isdigit( character ) || character == '.' )
     {
-        if ( character == '.' && !pointFounded )
+        if ( character == '.' && !pointIsFound )
         {
-            pointFounded = true;
+            pointIsFound = true;
             if ( !std::isdigit( mFileBuffer.peek() ) )
             {
                 return { EToken::error, "incorect floating point type" };
@@ -69,7 +69,7 @@ TokenType StreamParser::parseNumber()
     }
     //TODO check after numbers ?
 
-    if ( pointFounded )
+    if ( pointIsFound )
     {
         return { EToken::floating_point_literal, number };
     }

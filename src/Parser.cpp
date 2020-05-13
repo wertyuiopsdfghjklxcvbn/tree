@@ -10,6 +10,7 @@
 #include "ast/BinaryExpression.hpp"
 #include "ast/Boolean.hpp"
 #include "ast/ConditionalStatementIf.hpp"
+#include "ast/CycleWhile.hpp"
 #include "ast/FunctionCall.hpp"
 #include "ast/FunctionDefinition.hpp"
 #include "ast/Number.hpp"
@@ -498,6 +499,25 @@ bool Parser::parseBlock( const size_t& parentBlockIndent, std::unique_ptr<ast::C
                         isParsed = false;
                         node = nullptr;
                         break;
+                    }
+                }
+                else if ( token.first == EToken::kv_while )
+                {
+                    mStreamParser.getNextToken();
+                    std::unique_ptr<ast::Node> condition = parseBinaryExpression();
+                    if ( condition )
+                    {
+                        std::unique_ptr<ast::CodeBlock> blockAST;
+                        if ( parseBlock( blockIndent, blockAST ) )
+                        {
+                            node = std::make_unique<ast::CycleWhile>( std::move( condition ), std::move( blockAST ) );
+                        }
+                        else
+                        {
+                            printError( "error parsing block while" );
+                            isParsed = false;
+                            break;
+                        }
                     }
                 }
                 else if ( token.first == EToken::kv_return )

@@ -40,16 +40,17 @@ namespace ast
         {
             llvm::Value* condition = statementsIfIterator->first->generate( module, statementBasicBlock, &valueSymbolTable );
             llvm::BasicBlock* ifBlock;
+            ifBlock = llvm::BasicBlock::Create( module.getContext(), "if", statementBasicBlock->getParent() );
+            llvm::BasicBlock* afterIfBlock = ifBlock;
             if ( condition != nullptr )
             {
-                ifBlock = llvm::BasicBlock::Create( module.getContext(), "if", statementBasicBlock->getParent() );
-                if ( statementsIfIterator->second->generate( module, ifBlock, &valueSymbolTable ) == nullptr )
+                if ( statementsIfIterator->second->generate( module, afterIfBlock, &valueSymbolTable ) == nullptr )
                 {
                     printError( "error generating if block" );
                     return nullptr;
                 }
             }
-            ifBlock->getInstList().push_back( llvm::BranchInst::Create( mergeBasicBlock ) );
+            afterIfBlock->getInstList().push_back( llvm::BranchInst::Create( mergeBasicBlock ) );
 
 
             if ( statementsIfIterator != --mListOfStatementsIf.end() )
@@ -59,12 +60,13 @@ namespace ast
             else
             {
                 elseBlock = llvm::BasicBlock::Create( module.getContext(), "else", basicBlock->getParent() );
-                if ( mElseBody->generate( module, elseBlock, &valueSymbolTable ) == nullptr )
+                llvm::BasicBlock* afterElseBlock = elseBlock;
+                if ( mElseBody->generate( module, afterElseBlock, &valueSymbolTable ) == nullptr )
                 {
                     printError( "error generating else block" );
                     return nullptr;
                 }
-                elseBlock->getInstList().push_back( llvm::BranchInst::Create( mergeBasicBlock ) );
+                afterElseBlock->getInstList().push_back( llvm::BranchInst::Create( mergeBasicBlock ) );
             }
             returnIfInst = llvm::BranchInst::Create( ifBlock, elseBlock, condition );
             statementBasicBlock->getInstList().push_back( returnIfInst );

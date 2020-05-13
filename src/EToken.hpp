@@ -29,11 +29,10 @@ enum class EToken
     function_definition,
     comma,
     indent,
-    //kv_true,
-    //kv_false,
     kv_if,
     kv_elif,
     kv_else,
+    kv_while,
     error
 };
 

@@ -10,4 +10,5 @@ add_library(ast STATIC
     Return.cpp
     ConditionalStatementIf.cpp
     CodeBlock.cpp
+    CycleWhile.cpp
 )
