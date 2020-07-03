@@ -16,15 +16,10 @@ IRGenerator::IRGenerator( std::unique_ptr<ast::CodeBlock>& parsedAST, const std:
 {
 }
 
-bool IRGenerator::generate()
+std::pair<std::unique_ptr<llvm::Module>, std::unique_ptr<llvm::LLVMContext>> IRGenerator::generate()
 {
-    llvm::LLVMContext context;
-    std::shared_ptr<llvm::Module> module = std::make_shared<llvm::Module>( mModuleName, context );
-
-
-    //llvm::FunctionType* FT = llvm::FunctionType::get( llvm::Type::getInt32Ty( context ), /*not vararg*/ false );
-    //llvm::Function* F = llvm::Function::Create( FT, llvm::Function::ExternalLinkage, "main", *module );
-    //llvm::BasicBlock* BB = llvm::BasicBlock::Create( context, "EntryBlock", F );
+    std::unique_ptr<llvm::LLVMContext> context = std::make_unique<llvm::LLVMContext>();
+    std::unique_ptr<llvm::Module> module = std::make_unique<llvm::Module>( mModuleName, *context );
 
     llvm::BasicBlock* initialBasicBasicBlock = nullptr;
     if ( mParsedAST->generate( *module, initialBasicBasicBlock, nullptr ) == nullptr )
@@ -34,5 +29,5 @@ bool IRGenerator::generate()
 
     module->print( llvm::errs(), nullptr );
 
-    return true;
+    return { std::move( module ), std::move( context ) };
 }

@@ -8,6 +8,7 @@ add_executable(tree
     EToken.cpp
     IRGenerator.cpp
     StreamParser.cpp
+    BinaryGenerator.cpp
 )
 
 target_link_libraries(tree ast)

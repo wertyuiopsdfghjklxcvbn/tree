@@ -1,6 +1,5 @@
 #include "BinaryExpression.hpp"
 #include "../Logging.hpp"
-#include "../Operators.hpp"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
@@ -42,7 +41,7 @@ namespace ast
                         basicBlock->getInstList().push_back( loadInst );
                         lhs = loadInst;
                     }
-                    //TODO diferent for fpn
+                    //TODO different for fpn
                     llvm::Instruction* instruction = llvm::BinaryOperator::Create( llvm::Instruction::Add, lhs, rhs );
                     basicBlock->getInstList().push_back( instruction );
                     return instruction;

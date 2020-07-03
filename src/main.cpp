@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 
+#include "BinaryGenerator.hpp"
 #include "IRGenerator.hpp"
 #include "Parser.hpp"
 
@@ -126,14 +127,27 @@ int main( const int argc, const char* argv[] )
                         << "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\n";
                     std::string pathAsString = rootFilePath.generic_string();
                     IRGenerator irGenerator( parsedAST, pathAsString );
-                    irGenerator.generate();
+
+                    //llvm::Module* module = irGenerator.generate();
+                    std::pair<std::unique_ptr<llvm::Module>, std::unique_ptr<llvm::LLVMContext>> p = irGenerator.generate();
+                    if ( p.first != nullptr )
+                    {
+                        BinaryGenerator binaryGenerator( std::move(p.first) );
+                        binaryGenerator.generate();
+                    }
+                    else
+                    {
+                        std::cout << "fail to generate ir\n";
+                    }
                 }
                 else
                 {
                     std::cout << "fail to parse\n";
                 }
-
-                //parseFile( fileBuffer );
+            }
+            else
+            {
+                std::cout << "can`t read file " << rootFilePath << "\n";
             }
         }
         else

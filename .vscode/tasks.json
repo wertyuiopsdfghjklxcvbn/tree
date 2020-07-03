@@ -43,7 +43,7 @@
             "label": "run",
             "type": "shell",
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${workspaceFolder}/build"
             },
             "windows": {
                 "command": "${workspaceFolder}/scripts/python/run.py"
