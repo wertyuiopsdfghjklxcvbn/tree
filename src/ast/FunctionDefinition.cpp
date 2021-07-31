@@ -1,5 +1,7 @@
-#include "FunctionDefinition.hpp"
+#include <typeinfo>
+
 #include "../Logging.hpp"
+#include "FunctionDefinition.hpp"
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
@@ -60,7 +62,7 @@ namespace ast
         {
             s += i.show() + " ";
         }
-        return "FunctionDefinition: " + mReturnType.show() + " " + std::to_string( mArguments.size() ) + s + " " + mBody->show();
+        return std::string( typeid( *this ).name() ) + ": " + mReturnType.show() + " " + std::to_string( mArguments.size() ) + s + " " + mBody->show();
     }
 
 } // namespace ast
