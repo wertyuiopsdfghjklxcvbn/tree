@@ -11,5 +11,7 @@ add_executable(tree
     BinaryGenerator.cpp
 )
 
-target_link_libraries(tree ast)
-
+target_link_libraries(tree 
+    ast 
+    ${LLVM_LIBS}
+)

@@ -49,6 +49,18 @@
                 "command": "${workspaceFolder}/scripts/python/run.py"
             },
             "problemMatcher": []
+        },
+        {
+            "label": "test",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
+            "windows": {
+                "command": "${workspaceFolder}/scripts/python/test.py"
+            },
+            "problemMatcher": []
         }
+        
     ]
 }

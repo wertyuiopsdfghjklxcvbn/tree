@@ -6,7 +6,6 @@ enum class EToken
 {
     eof = 1,
     eol,
-    //indent,
     //comment,
     kv_import,
     //kv_pass, //?
